@@ -17,7 +17,7 @@ namespace PrefabToPsd
     [Serializable]
     public sealed class ExportOptions
     {
-        public const string Version = "2.0.1";
+        public const string Version = "2.0.2";
         public int Width;
         public int Height;
         public bool PreserveHierarchy = true;

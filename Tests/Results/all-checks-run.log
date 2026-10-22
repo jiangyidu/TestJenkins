@@ -12,7 +12,7 @@ Running original-reader
 PASS original-reader
 {
   "target_unity": "2018.4.36f1",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "jobs": [
     {
       "name": "compile",
@@ -44,8 +44,8 @@ PASS original-reader
   "core_assertions": 446,
   "reference_assertions": 37,
   "workflow_assertions": 108,
-  "probe_assertions": 112,
-  "managed_assertions": 703,
+  "probe_assertions": 160,
+  "managed_assertions": 751,
   "independent_psd_files": 7,
   "independent_icc_profiles": 2,
   "original_reader_assertions": 130

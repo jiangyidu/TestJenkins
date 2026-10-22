@@ -1,10 +1,10 @@
-# Integrated 2.0.1 测试与流程验证
+# Integrated 2.0.2 测试与流程验证
 
 日期：2026-10-22（Asia/Shanghai）。目标：Unity 2018.4.36f1、.NET 4.x Equivalent、UGUI。
 
 ## 已实际执行
 
-统一入口 Tests/run_all_checks.py 在 v2.0.1 源码上完成，compile、core、reference、workflow、probe、original-reader 六项任务退出码均为 0：
+统一入口 Tests/run_all_checks.py 在 v2.0.2 源码上完成，compile、core、reference、workflow、probe、original-reader 六项任务退出码均为 0：
 
 | 检查 | 结果 | 原始记录（Tests/Results/ 内） |
 | --- | --- | --- |
@@ -16,13 +16,22 @@
 | 命名 / 批量规划 / 配置 / CLI | 108 项断言 | workflow/results.log |
 | 实际GPU自测中的私有 PSD reader | 61 项托管断言 | probe/results.log |
 | 捕获正控像素判定 | 51 项托管断言 | probe/results.log |
+| Canvas参考PPU计算策略 | 48 项托管断言 | probe/results.log |
 | 独立 psd-tools 读取和重合成 | 7 个 PSD 通过 | 基础 interop.log、资源 independent-resources.log |
 | 独立 Pillow / LittleCMS ICC 读取 | 2 个 profile 通过 | integrated-core/resources/independent-resources.log |
 | 原上传 PsdTOUgui reader/decoder | 130 项检查、5 个 PSD 通过 | original-reader.txt |
 
-算法/策略合计 **703 项托管断言**（446+37+108+112）；原读取器的130项检查单列。新增112项由61项实际私有reader检查和51项捕获控制判定组成。不同测试计数不能与B的“16项自测”直接相除排名。
+算法/策略合计 **751 项托管断言**（446+37+108+160）；原读取器的130项检查单列。Probe任务160项由61项实际私有reader、51项捕获控制判定和本版新增48项PPU策略组成。不同测试计数不能与B的“16项自测”直接相除排名。
 
 编译使用 Unity 官方 2018.4.36f1（changeset 6cd387d23174）的 Data/Tools/RoslynNet46/csc.exe、Mono 和真实 UnityEngine/UnityEditor/UGUI 程序集，没有用自制 API stub。最终源码 SHA256 在 Tests/Results/all-checks-summary.json；打包时会核对与成功测试快照一致。
+
+## 用户机器上的截图证据
+
+用户最新v2.0.1截图显示红蓝取样、Mask／RectMask2D、CanvasGroup检查已通过，自测推进到九宫格：整体边界 `8,8 64x32` 通过，但预期8像素左边框的取样R=55、实际为中心颜色R=24。它证明该次运行已经产生可见像素，失败点已从空白捕获推进到非默认Canvas PPU；不能据此推断后续全部自测、v2.0.2新增GPU用例或实际业务PSD都已通过。
+
+已确认的代码缺陷是把Prefab资产的Canvas native参考PPU当成序列化Scaler意图。配置200PPU的资产可能只暴露尚未应用配置的native100；克隆后挂入host使其成为嵌套Canvas，随后Scaler被禁用，不能补上配置200。4像素Sprite边框在Canvas200／Sprite100时应占8设计像素，误用100后则只有4像素。
+
+v2.0.2在克隆、重挂父节点及停用Scaler前，从源层级保存PPU；资产原根且启用的Scaler按配置解析，场景对象、停用Scaler和原嵌套Scaler保留实际native值，并于副本激活、校准及每次渲染恢复。详细规则和复测见 [CanvasPpuFix.zh-CN.md](CanvasPpuFix.zh-CN.md)。
 
 ## 验证覆盖
 
@@ -31,6 +40,12 @@
 Raw/RLE、分组、Unicode/emoji、ID、边界、可见性、opacity、逐层RGBA与合成通道均有真实文件校验。合成RGB使用PSD白底预合成，图层仍是straight RGBA；独立工具从图层重合成，避免只验证已有预览。
 
 VerifyOutput默认开启：写同目录临时文件，关闭写流，使用PsdOutputVerifier核对完整图层、ID、名字、坐标、资源和merged通道，然后才原子提交。校验失败或取消清理临时文件并保留旧输出。
+
+### Canvas PPU策略回归
+
+本版新增48项纯托管回归，验证World Space、Constant Pixel Size、Scale With Screen Size、Constant Physical Size的参考PPU计算，场景／停用／嵌套情况下保留native值的判定输入，以及无效数值拒绝。它们调用生产PPU计算函数，未启动Unity，也不把构造参数当成Prefab资产或九宫格GPU截图。
+
+资产200PPU的8像素边框、场景200PPU的8像素边框、停用Scaler且runtime300PPU的12像素边框三类GPU用例已加入编辑器自测并通过API编译；本环境未执行这些GPU用例。原边框颜色预期和容差没有放宽。
 
 ### 空白捕获反馈与 v2.0.1 回归
 
@@ -42,7 +57,7 @@ VerifyOutput默认开启：写同目录临时文件，关闭写流，使用PsdOu
 
 捕获流程现依次尝试 Game、SceneView、SceneView+显式UI几何发射、Preview+显式UI几何发射。每条候选路径均须读回半透明红色正控，并在隐藏控制对象后得到全透明负控；全部失败则在写PSD前抛错。ARGBFloat还必须支持alpha混合，否则尝试具备渲染和混合能力的ARGBHalf。即使校准通过，源合成图完全透明也会拒绝写入或替换旧PSD。业务像素断言没有放宽。
 
-上述变更已通过真实2018.4 API编译与托管回归，但仍需发生故障的Windows机器复测，尚不能据此宣称空白捕获的具体根因已确认或GPU问题已实机修复。升级和证据收集见 [BlankCaptureFix.zh-CN.md](BlankCaptureFix.zh-CN.md)。
+上述为v2.0.1历史处理。用户新截图已证明该次自测中的可见像素、遮罩和组透明度通过；本环境仍未执行GPU，且业务PSD最终结果尚未获得确认。历史升级和证据收集见 [BlankCaptureFix.zh-CN.md](BlankCaptureFix.zh-CN.md)，本版PPU故障见 [CanvasPpuFix.zh-CN.md](CanvasPpuFix.zh-CN.md)。
 
 ### 原稿参考
 
@@ -66,9 +81,10 @@ Tools / Prefab to PSD / Run Self Tests 已接入工作流测试，并通过编�
 - 批量配置、重名、去重、部分失败、取消、持久化内部子对象拒绝。
 - 提交前验证阶段取消，旧文件保持且无临时残留。
 - 半透明叠色、Mask/RectMask2D逐层隔离、CanvasGroup、非默认PPU九宫格、Raw/RLE一致性。
+- 资产Scaler200PPU、场景native200PPU和停用Scaler／runtime300PPU的九宫格边框及源对象PPU保持。
 - 捕获控制正负校准、完整实际RGBA、自测合成图alpha边界／图层边界，以及显卡和CanvasRenderer状态诊断。
 
-自测报告默认保存在工程 `Temp/PrefabToPsdSelfTests/self-test-report.txt`，失败时也会写出。第一张合成PSD成功生成后，额外保存 `composite-rle.diagnostics.txt`、`composite-rle.preview.png` 和PSD；若在捕获校准阶段失败，这些图像文件可能尚未生成。完全无活动Graphic或源合成图全透明的根会拒绝；保留空组指有可导出内容的Prefab内部空组。
+自测报告默认保存在工程 `Temp/PrefabToPsdSelfTests/self-test-report.txt`，失败时也会写出。九宫格PPU测试会保存 `sliced-ppu.diagnostics.txt`、`sliced-ppu.preview.png` 和 `sliced-ppu.psd`，并记录源native／Scaler／解析后的PPU及捕获Canvas值；另两个新增场景用例使用 `sliced-scene-ppu` 和 `sliced-runtime-ppu` 前缀。更早的合成图诊断使用 `composite-rle` 前缀。若尚未运行到相应阶段，文件可能没有生成。完全无活动Graphic或源合成图全透明的根会拒绝；保留空组指有可导出内容的Prefab内部空组。
 
 本环境无图形启动诊断停留在legacy licensing初始化，出现CDN超时和Error enumerating network interfaces: Operation not permitted，退出1。它没有执行GPU自测，也没有提供或绕过授权。日志见Tests/Results/unity-startup/editor.log。
 
@@ -86,4 +102,4 @@ Tools / Prefab to PSD / Run Self Tests 已接入工作流测试，并通过编�
 
 不会自动下载Unity、获取授权或启动GPU。交付不包含Unity程序集或原上传插件。
 
-目标机建议：覆盖原插件目录（特别是已有 `Assets/ThirdParty/PrefabToPsd` 的项目，避免第二份脚本）→等待编译→Run Self Tests→通过后导出实际完整UI根→Photoshop按sRGB打开并逐层核对。若仍失败，请提供上述报告和已生成的诊断图／PSD。Linear项目的默认Photoshop混合空间仍可能与Unity不同，详见README。
+目标机建议：覆盖原插件目录（特别是已有 `Assets/ThirdParty/PrefabToPsd` 的项目，避免第二份脚本）→等待编译→Run Self Tests→通过后导出实际完整UI根→Photoshop按sRGB打开并逐层核对。若PPU测试仍失败，请提供 `self-test-report.txt` 和已生成的 `sliced-ppu.diagnostics.txt`／`.preview.png`／`.psd`。Linear项目的默认Photoshop混合空间仍可能与Unity不同，详见README。

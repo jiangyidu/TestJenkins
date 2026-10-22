@@ -54,6 +54,7 @@ def main():
     print(run.stdout, end='')
     match = re.search(r'PASS: (\d+) real-probe regression assertions', run.stdout)
     coverage = re.search(r'Coverage: (\d+) private-probe assertions; (\d+) capture-control assertions', run.stdout)
+    ppu_coverage = re.search(r'; (\d+) canvas-ppu assertions', run.stdout)
     summary = {'exit_code': run.returncode, 'assertions': int(match.group(1)) if match else 0,
                'production_scripts_compiled': len(sources) - 1,
                'unity_references': len(refs), 'actual_private_probe_invoked': bool(match),
@@ -61,6 +62,8 @@ def main():
     if coverage:
         summary['private_probe_assertions'] = int(coverage.group(1))
         summary['capture_control_assertions'] = int(coverage.group(2))
+    if ppu_coverage:
+        summary['canvas_ppu_assertions'] = int(ppu_coverage.group(1))
     (output / 'summary.json').write_text(json.dumps(summary, indent=2), encoding='utf-8')
     return run.returncode
 

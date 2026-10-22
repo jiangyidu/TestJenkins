@@ -12,4 +12,6 @@ python Tests/Probe/run_probe_tests.py /path/to/Unity/Editor
 
 同时直接测试生产 `PrefabPsdExporter.CheckCaptureControl`：正常半透明红、1×1/小画布、透明空白、错误不透明度、重复绘制、颜色或通道错误、九个取样位置被裁剪、无效尺寸/缓冲区，以及容差内外边界。校验过程不得修改输入像素。
 
+PPU 回归直接调用生产 `ResolveCanvasReferencePpu`，覆盖持久化 prefab 的 native 默认 100 / CanvasScaler 配置 200、场景原生值保留、禁用与嵌套 scaler 不适用、WorldSpace、两种非物理屏幕模式、五种物理单位、非默认 defaultSpriteDPI、仅拒绝实际使用的无效浮点输入，以及转换结果上溢/下溢。截图案例的 4px sprite 边框在 reference PPU200 / sprite PPU100 时应为 8 canvas units。
+
 此测试用于排查 PSD 解析、白底还原、压缩和坐标解释问题，不能证明 Unity GPU 渲染正确。结果默认写入当前目录下的 `Results/`；全套流程可用 `--output` 指定其他证据目录。

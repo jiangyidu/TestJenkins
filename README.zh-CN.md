@@ -1,10 +1,12 @@
-# Prefab to PSD Integrated 2.0.1
+# Prefab to PSD Integrated 2.0.2
 
 面向 **Unity 2018.4.36f1 / UGUI** 的编辑器工具。以此前实现 A 的 Unity 实际渲染、透明度恢复、PSD 写入和文件保护为基础，吸收 B 的预检、导出预设、命名、批量和原稿参考能力。
 
 输出为 **RGB 8 位分层 PSD**，并可生成保存文字、布局、资源和参考来源信息的 JSON。文字、遮罩、九宫格和 UI 效果烘焙到像素层；不生成 Photoshop 原生可编辑文字、蒙版或智能对象，也不提供完整的 PSD 无损往返承诺。
 
 更新日期：2026-10-22（Asia/Shanghai）。实际验证结果与仍待实机完成的项目见 [测试报告](Docs/TestReport.zh-CN.md)。
+
+v2.0.2 修正Canvas参考PPU的来源判定与恢复：Prefab资产按原层级中有效的根CanvasScaler配置解析，场景对象保留实际运行时PPU；在克隆、重挂父节点和停用Scaler前保存，再于激活、校准及渲染阶段恢复。它针对用户新截图中九宫格整体边界正确、8像素边框却采到中心颜色的故障；原像素预期和容差保留。原因与目标机复测见 [Canvas PPU修复说明](Docs/CanvasPpuFix.zh-CN.md)。
 
 v2.0.1 针对“测试红色取样预期255但为0，实际导出的PSD也为空”的反馈调整捕获路径，并加入写入前的已知 UI 图案校准和全透明拒绝。实现与复测步骤见 [空白捕获修复说明](Docs/BlankCaptureFix.zh-CN.md)。本环境未执行 Windows / Direct3D11 GPU 自测，仍需在发生问题的机器验证。
 
@@ -25,7 +27,7 @@ v2.0.1 针对“测试红色取样预期255但为0，实际导出的PSD也为空
 4. 保持“提交前校验 PSD”开启，点击“导出当前对象…”。
 5. 检查窗口/Console 的结果、警告，以及同目录的 `.prefab.json`。
 
-升级后先运行 `Tools > Prefab to PSD > Run Self Tests`，通过后再导出业务UI；也可用 `Create Demo Prefab` 创建 640×480 示例。自测报告和输出默认写入本 Unity 工程的 `Temp/PrefabToPsdSelfTests`，临时测试资产会在结束时清理。v2.0.1 会输出显卡／格式混合能力和捕获控制结果；第一张合成图成功生成后，还会写出 `composite-rle.diagnostics.txt`、`composite-rle.preview.png` 和 PSD。失败复测文件的收集方式见 [修复说明](Docs/BlankCaptureFix.zh-CN.md)。
+升级后先运行 `Tools > Prefab to PSD > Run Self Tests`，通过后再导出业务UI；也可用 `Create Demo Prefab` 创建 640×480 示例。自测报告和输出默认写入本 Unity 工程的 `Temp/PrefabToPsdSelfTests`，临时测试资产会在结束时清理。诊断包含显卡／格式混合能力、捕获控制和Canvas PPU来源；合成及九宫格测试写出各自 `.diagnostics.txt`、`.preview.png` 和 PSD。若PPU测试仍失败，请提供 `self-test-report.txt` 与已生成的 `sliced-ppu.diagnostics.txt`、`sliced-ppu.preview.png`、`sliced-ppu.psd`，详见 [PPU修复说明](Docs/CanvasPpuFix.zh-CN.md)。
 
 ## 四种预设
 
@@ -109,6 +111,8 @@ ICC 继承不是颜色空间转换。没有可继承的已验证 ICC 时，输�
 导出在预览场景的副本中将根旋转归零、缩放归一，按输出尺寸建立二维设计画布，子节点变换正常参与 Unity 渲染。这是设计画布导出，不是 Game View 截屏。只选子树时，外部祖先的 CanvasGroup、Mask 和布局上下文不会包含。
 
 捕获先尝试普通 Game 相机；只有已知半透明红色UI能正确读回、隐藏控制图后输出全透明，才继续抓取源内容。需要时尝试 SceneView／Preview 与显式UI几何发射路径，每条路径都接受相同校准。`ARGBFloat` 同时满足可渲染和可混合时优先使用；否则尝试具备相同能力的 `ARGBHalf`。这些检查不会放宽业务像素自测的断言。
+
+九宫格／平铺的边框依赖Canvas参考PPU。Prefab资产的 `Canvas.referencePixelsPerUnit` 是运行时状态，不能直接代替序列化的Scaler设置；因此在原层级中，启用的根Scaler按其配置解析后保存。场景对象、停用Scaler和原本嵌套的Scaler保留实际native PPU，不被配置值覆盖。快照会恢复到host及对应的Canvas副本，源对象不改动。World Space、Constant Pixel Size、Scale With Screen Size采用Scaler参考PPU；屏幕空间Constant Physical Size按参考PPU×物理单位DPI÷默认Sprite DPI解析。
 
 Linear 项目在线性空间恢复 Alpha 后转为 sRGB；完整 merged 图来自 Unity。Photoshop 默认 sRGB 数值混合与 Unity Linear 混合不同，重新合成半透明层时应使用匹配的混合空间设置。
 
@@ -214,3 +218,4 @@ python Tests/Probe/run_probe_tests.py /path/Unity/Editor
 - [原 PsdTOUgui 上传包分析](Docs/OriginalPackageAnalysis.md)
 - [测试报告](Docs/TestReport.zh-CN.md)
 - [空白捕获修复与目标机复测](Docs/BlankCaptureFix.zh-CN.md)
+- [九宫格PPU修复与目标机复测](Docs/CanvasPpuFix.zh-CN.md)

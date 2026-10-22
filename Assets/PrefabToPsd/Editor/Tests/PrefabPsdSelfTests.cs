@@ -263,16 +263,20 @@ namespace PrefabToPsd
                 canvas.renderMode = RenderMode.WorldSpace;
                 CanvasScaler scaler = root.AddComponent<CanvasScaler>();
                 scaler.referencePixelsPerUnit = 200f;
-                canvas.referencePixelsPerUnit = 200f;
                 Image panel = PrefabPsdDemo.Image(root.transform, "Sliced at 200 PPU", 8, 8, 64, 32, Color.white);
                 panel.sprite = sprite;
                 panel.type = Image.Type.Sliced;
             }, delegate(GameObject prefab)
             {
+                Assert(prefab.GetComponent<CanvasScaler>().referencePixelsPerUnit == 200f,
+                    "Saved prefab retains serialized Scaler PPU=200.");
+                Assert(PrefabPsdExporter.SourceCanvasReferencePpu(prefab.GetComponent<Canvas>()) == 200f,
+                    "Prefab asset resolves serialized Scaler PPU before cloning.");
                 string before = HierarchySnapshot(prefab);
                 ExportReport report = PrefabPsdExporter.Export(prefab, Path.Combine(output, "sliced-ppu.psd"),
                     Options(PsdCompression.Rle));
                 PsdProbe image = PsdProbe.Read(report.PsdPath);
+                RecordCaptureArtifacts(image, report);
                 ProbeLayer panel = image.Layer("Sliced at 200 PPU");
                 Bounds(panel, 8, 8, 64, 32, "Nine-slice output bounds");
                 // Sprite border=4, sprite PPU=100, Canvas reference PPU=200:
@@ -282,6 +286,45 @@ namespace PrefabToPsd
                 LayerPixel(panel, 40, 14, 55, 202, 192, 255, 3, "Non-default Canvas PPU preserves 8-pixel top border");
                 Pixel(image, 14, 24, 55, 202, 192, 255, 3, "Merged nine-slice border");
                 Assert(HierarchySnapshot(prefab) == before, "Canvas and CanvasScaler settings are unchanged.");
+
+                Scene scene = EditorSceneManager.NewPreviewScene();
+                GameObject instance = null;
+                try
+                {
+                    instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+                    Canvas instanceCanvas = instance.GetComponent<Canvas>();
+                    instanceCanvas.referencePixelsPerUnit = 200f;
+                    string sceneBefore = HierarchySnapshot(instance);
+                    ExportReport live = PrefabPsdExporter.Export(instance, Path.Combine(output, "sliced-scene-ppu.psd"),
+                        Options(PsdCompression.Raw));
+                    PsdProbe liveImage = PsdProbe.Read(live.PsdPath);
+                    RecordCaptureArtifacts(liveImage, live);
+                    LayerPixel(liveImage.Layer("Sliced at 200 PPU"), 14, 24, 55, 202, 192, 255, 3,
+                        "Scene Canvas PPU=200 preserves its eight-pixel border");
+                    Assert(HierarchySnapshot(instance) == sceneBefore && instanceCanvas.referencePixelsPerUnit == 200f,
+                        "Scene export preserves the original Canvas PPU and components.");
+
+                    instance.GetComponent<CanvasScaler>().enabled = false;
+                    instanceCanvas.referencePixelsPerUnit = 300f;
+                    Assert(PrefabPsdExporter.SourceCanvasReferencePpu(instanceCanvas) == 300f,
+                        "Scene Canvas keeps runtime PPU=300 despite disabled Scaler configuration=200.");
+                    ExportReport custom = PrefabPsdExporter.Export(instance, Path.Combine(output, "sliced-runtime-ppu.psd"),
+                        Options(PsdCompression.Rle));
+                    PsdProbe customImage = PsdProbe.Read(custom.PsdPath);
+                    RecordCaptureArtifacts(customImage, custom);
+                    ProbeLayer customPanel = customImage.Layer("Sliced at 200 PPU");
+                    LayerPixel(customPanel, 18, 24, 55, 202, 192, 255, 3,
+                        "Runtime PPU=300 keeps a twelve-pixel left border");
+                    LayerPixel(customPanel, 22, 24, 24, 58, 77, 255, 3,
+                        "Runtime PPU=300 center begins after the twelve-pixel border");
+                    Assert(instanceCanvas.referencePixelsPerUnit == 300f && !instance.GetComponent<CanvasScaler>().enabled,
+                        "Runtime PPU and disabled Scaler remain unchanged.");
+                }
+                finally
+                {
+                    if (instance != null) UnityEngine.Object.DestroyImmediate(instance);
+                    EditorSceneManager.ClosePreviewScene(scene);
+                }
             });
         }
 
@@ -441,10 +484,10 @@ namespace PrefabToPsd
             List<string> details = new List<string>();
             details.Add("PSD: " + report.PsdPath);
             details.Add("Merged " + AlphaSummary(image.Pixels, image.Width, image.Height));
-            details.Add("Red sample (10,10) RGBA=" + PixelText(image.Pixels, (10 * image.Width + 10) * 4));
-            details.Add("Red vertical mirror (10,53) RGBA=" + PixelText(image.Pixels, (53 * image.Width + 10) * 4));
-            details.Add("Blue sample (38,25) RGBA=" + PixelText(image.Pixels, (25 * image.Width + 38) * 4));
-            details.Add("Overlap sample (24,16) RGBA=" + PixelText(image.Pixels, (16 * image.Width + 24) * 4));
+            details.Add("Sample (10,10) RGBA=" + PixelText(image.Pixels, (10 * image.Width + 10) * 4));
+            details.Add("Vertical mirror (10,53) RGBA=" + PixelText(image.Pixels, (53 * image.Width + 10) * 4));
+            details.Add("Sample (38,25) RGBA=" + PixelText(image.Pixels, (25 * image.Width + 38) * 4));
+            details.Add("Sample (24,16) RGBA=" + PixelText(image.Pixels, (16 * image.Width + 24) * 4));
             foreach (ProbeLayer layer in image.Layers)
                 if (layer.Kind == 0)
                     details.Add("Layer '" + layer.Name + "': bounds=" + layer.Left + "," + layer.Top + " " +
@@ -492,8 +535,9 @@ namespace PrefabToPsd
                 if (alpha == 0 && channel < 3) continue;
                 int actual = inside ? layer.Pixels[offset + channel] : 0;
                 Assert(Math.Abs(actual - expected[channel]) <= tolerance,
-                    message + " channel " + channel + ": expected " + expected[channel] +
-                    " ± " + tolerance + ", got " + actual + ".");
+                    message + " at (" + x + "," + y + ") channel " + channel + ": expected " + expected[channel] +
+                    " ± " + tolerance + ", got " + actual + "; full actual RGBA=" +
+                    (inside ? PixelText(layer.Pixels, offset) : "(0,0,0,0)") + ".");
             }
         }
 

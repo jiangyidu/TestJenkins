@@ -1,0 +1,15 @@
+{
+  "version": "2.0.2",
+  "source_files": 148,
+  "unitypackage_entries": 22,
+  "source_snapshot_matches_tests": true,
+  "zip_crc_and_contents": "PASS",
+  "unitypackage_paths_guids_contents": "PASS",
+  "upgrade_zip_crc_and_contents": "PASS",
+  "managed_assertions": 751,
+  "original_reader_assertions": 130,
+  "unity_import_executed": false,
+  "unity_gpu_executed": false,
+  "canvas_ppu_gpu_fix_verified": false,
+  "photoshop_gui_executed": false
+}

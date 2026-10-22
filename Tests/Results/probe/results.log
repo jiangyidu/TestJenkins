@@ -110,5 +110,53 @@ PASS Green just outside the tolerance is rejected. Control at (0,0) expected RGB
 PASS Blue just outside the tolerance is rejected. Control at (0,0) expected RGBA=(255,0,0,128), got (255,0,5,128).
 PASS Alpha just below the tolerance is rejected. Control at (0,0) expected RGBA=(255,0,0,128), got (255,0,0,123).
 PASS Alpha just above the tolerance is rejected. Control at (0,0) expected RGBA=(255,0,0,128), got (255,0,0,133).
-Coverage: 61 private-probe assertions; 51 capture-control assertions.
-PASS: 112 real-probe regression assertions; no Unity GPU invoked.
+PASS A persistent prefab's native default 100 cannot replace its configured reference PPU 200. Expected 200, got 200.
+PASS The reported 4px sprite border at sprite PPU100 resolves to 8 canvas units at reference PPU200.
+PASS A live scene's authoritative native PPU 300 is preserved. Expected 300, got 300.
+PASS A disabled scaler contributes no physical-mode conversion. Expected 275, got 275.
+PASS A nested scaler that does not apply cannot override the native canvas reference. Expected 325, got 325.
+PASS Screen ConstantPixelSize uses configured PPU and ignores the unused sprite DPI. Expected 200, got 200.
+PASS ScaleWithScreenSize preserves configured PPU instead of applying physical units. Expected 250, got 250.
+PASS WorldSpace keeps configured PPU even when physical-mode-only inputs are invalid. Expected 200, got 200.
+PASS WorldSpace bypasses all screen-mode inputs, including an unused mode enum. Expected 200, got 200.
+PASS An inapplicable scaler does not inspect any invalid scaler-only settings. Expected 300, got 300.
+PASS An unused native placeholder does not prevent restoration of a valid persistent scaler setting. Expected 200, got 200.
+PASS A positive finite native subnormal value is preserved without imposing an arbitrary minimum. Expected 1.401298E-45, got 1.401298E-45.
+PASS Screen physical Centimeters uses the correct unit DPI rather than device DPI. Expected 2.54, got 2.54.
+PASS Screen physical Millimeters uses the correct unit DPI rather than device DPI. Expected 25.4, got 25.4.
+PASS Screen physical Inches uses the correct unit DPI rather than device DPI. Expected 1, got 1.
+PASS Screen physical Points uses the correct unit DPI rather than device DPI. Expected 72, got 72.
+PASS Screen physical Picas uses the correct unit DPI rather than device DPI. Expected 6, got 6.
+PASS Physical conversion respects both non-default reference PPU and default sprite DPI. Expected 144, got 144.
+PASS A finite physical result is retained when float-only intermediate multiplication would overflow. Expected 72, got 72.
+PASS An invalid native PPU is rejected when the native value is authoritative: 0
+PASS An invalid active scaler reference PPU is rejected: 0
+PASS An invalid default sprite DPI is rejected when physical conversion uses it: 0
+PASS Inactive scaler values are irrelevant to native scene PPU: 0 Expected 300, got 300.
+PASS WorldSpace does not read the unused physical default sprite DPI: 0 Expected 200, got 200.
+PASS An invalid native PPU is rejected when the native value is authoritative: -1
+PASS An invalid active scaler reference PPU is rejected: -1
+PASS An invalid default sprite DPI is rejected when physical conversion uses it: -1
+PASS Inactive scaler values are irrelevant to native scene PPU: -1 Expected 300, got 300.
+PASS WorldSpace does not read the unused physical default sprite DPI: -1 Expected 200, got 200.
+PASS An invalid native PPU is rejected when the native value is authoritative: NaN
+PASS An invalid active scaler reference PPU is rejected: NaN
+PASS An invalid default sprite DPI is rejected when physical conversion uses it: NaN
+PASS Inactive scaler values are irrelevant to native scene PPU: NaN Expected 300, got 300.
+PASS WorldSpace does not read the unused physical default sprite DPI: NaN Expected 200, got 200.
+PASS An invalid native PPU is rejected when the native value is authoritative: Infinity
+PASS An invalid active scaler reference PPU is rejected: Infinity
+PASS An invalid default sprite DPI is rejected when physical conversion uses it: Infinity
+PASS Inactive scaler values are irrelevant to native scene PPU: Infinity Expected 300, got 300.
+PASS WorldSpace does not read the unused physical default sprite DPI: Infinity Expected 200, got 200.
+PASS An invalid native PPU is rejected when the native value is authoritative: -Infinity
+PASS An invalid active scaler reference PPU is rejected: -Infinity
+PASS An invalid default sprite DPI is rejected when physical conversion uses it: -Infinity
+PASS Inactive scaler values are irrelevant to native scene PPU: -Infinity Expected 300, got 300.
+PASS WorldSpace does not read the unused physical default sprite DPI: -Infinity Expected 200, got 200.
+PASS An unknown physical unit is rejected when its conversion factor is needed.
+PASS An unknown active screen scale mode is rejected instead of selecting a guessed conversion.
+PASS A physical conversion result above the finite float range is rejected.
+PASS A physical conversion that underflows to zero is rejected.
+Coverage: 61 private-probe assertions; 51 capture-control assertions; 48 canvas-ppu assertions.
+PASS: 160 real-probe regression assertions; no Unity GPU invoked.

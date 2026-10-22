@@ -193,6 +193,69 @@ namespace PrefabToPsd
             throw new NotSupportedException("The graphics device does not support floating-point render targets with alpha blending (ARGBFloat/ARGBHalf). Use a compatible graphics-enabled Unity Editor.");
         }
 
+        internal static float ResolveCanvasReferencePpu(float nativePpu, bool scalerApplies, bool worldSpace,
+            CanvasScaler.ScaleMode scaleMode, float scalerReferencePpu, CanvasScaler.Unit physicalUnit,
+            float defaultSpriteDpi)
+        {
+            float result = nativePpu;
+            if (scalerApplies)
+            {
+                result = scalerReferencePpu;
+                // Match CanvasScaler.Handle(): World Space bypasses screen modes.
+                if (!worldSpace)
+                {
+                    if (scaleMode == CanvasScaler.ScaleMode.ConstantPhysicalSize)
+                    {
+                        if (float.IsNaN(defaultSpriteDpi) || float.IsInfinity(defaultSpriteDpi) || defaultSpriteDpi <= 0f)
+                            throw new ArgumentOutOfRangeException("defaultSpriteDpi");
+                        double targetDpi;
+                        switch (physicalUnit)
+                        {
+                            case CanvasScaler.Unit.Centimeters: targetDpi = 2.54; break;
+                            case CanvasScaler.Unit.Millimeters: targetDpi = 25.4; break;
+                            case CanvasScaler.Unit.Inches: targetDpi = 1; break;
+                            case CanvasScaler.Unit.Points: targetDpi = 72; break;
+                            case CanvasScaler.Unit.Picas: targetDpi = 6; break;
+                            default: throw new ArgumentOutOfRangeException("physicalUnit");
+                        }
+                        result = (float)((double)scalerReferencePpu * targetDpi / defaultSpriteDpi);
+                    }
+                    else if (scaleMode != CanvasScaler.ScaleMode.ConstantPixelSize &&
+                        scaleMode != CanvasScaler.ScaleMode.ScaleWithScreenSize)
+                        throw new ArgumentOutOfRangeException("scaleMode");
+                }
+            }
+            if (float.IsNaN(result) || float.IsInfinity(result) || result <= 0f)
+                throw new ArgumentOutOfRangeException("referencePixelsPerUnit", "Canvas reference PPU must be positive and finite.");
+            return result;
+        }
+
+        private static Canvas FindEnabledCanvas(Transform node)
+        {
+            for (Transform current = node; current != null; current = current.parent)
+            {
+                Canvas canvas = current.GetComponent<Canvas>();
+                if (canvas != null && canvas.enabled) return canvas;
+            }
+            return null;
+        }
+
+        internal static float SourceCanvasReferencePpu(Canvas canvas)
+        {
+            CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
+            // Canvas.referencePixelsPerUnit is runtime state, not the serialized
+            // Scaler configuration. A persistent asset has not run Scaler.Handle().
+            // Resolve it in its original hierarchy, before reparenting makes it nested.
+            bool scalerApplies = EditorUtility.IsPersistent(canvas) && scaler != null && scaler.enabled &&
+                FindEnabledCanvas(canvas.transform.parent) == null;
+            return ResolveCanvasReferencePpu(canvas.referencePixelsPerUnit, scalerApplies,
+                canvas.renderMode == RenderMode.WorldSpace,
+                scaler == null ? CanvasScaler.ScaleMode.ConstantPixelSize : scaler.uiScaleMode,
+                scaler == null ? 100f : scaler.referencePixelsPerUnit,
+                scaler == null ? CanvasScaler.Unit.Points : scaler.physicalUnit,
+                scaler == null ? 96f : scaler.defaultSpriteDPI);
+        }
+
         private static bool HasNonTransparentPixels(byte[] rgba)
         {
             for (int index = 3; index < rgba.Length; index += 4)
@@ -345,6 +408,7 @@ namespace PrefabToPsd
             private bool[] maskEnabled;
             private readonly Dictionary<Graphic, int> originalDepths = new Dictionary<Graphic, int>();
             private readonly Dictionary<Graphic, int> originalIndices = new Dictionary<Graphic, int>();
+            private readonly Dictionary<Canvas, float> canvasReferences = new Dictionary<Canvas, float>();
             private bool disposed;
             public GameObject Root { get; private set; }
 
@@ -361,6 +425,10 @@ namespace PrefabToPsd
 
             public void Prepare()
             {
+                Canvas[] originalCanvases = source.GetComponentsInChildren<Canvas>(true);
+                float[] referencePixels = new float[originalCanvases.Length];
+                for (int index = 0; index < originalCanvases.Length; index++)
+                    referencePixels[index] = SourceCanvasReferencePpu(originalCanvases[index]);
                 scene = EditorSceneManager.NewPreviewScene();
                 host = new GameObject("PrefabToPsd Preview", typeof(RectTransform), typeof(Canvas));
                 host.hideFlags = HideFlags.HideAndDontSave;
@@ -369,8 +437,10 @@ namespace PrefabToPsd
                 Canvas hostCanvas = host.GetComponent<Canvas>();
                 hostCanvas.renderMode = RenderMode.WorldSpace;
                 hostCanvas.pixelPerfect = false;
-                Canvas sourceCanvas = source.GetComponentInParent<Canvas>();
-                hostCanvas.referencePixelsPerUnit = sourceCanvas != null ? sourceCanvas.referencePixelsPerUnit : 100f;
+                Canvas sourceCanvas = FindEnabledCanvas(source.transform);
+                float hostReference = sourceCanvas != null ? SourceCanvasReferencePpu(sourceCanvas) : 100f;
+                canvasReferences.Add(hostCanvas, hostReference);
+                hostCanvas.referencePixelsPerUnit = hostReference;
                 RectTransform hostRect = (RectTransform)host.transform;
                 hostRect.sizeDelta = new Vector2(width, height);
                 hostRect.position = Vector3.zero;
@@ -387,17 +457,28 @@ namespace PrefabToPsd
                 rootRect.anchoredPosition3D = new Vector3((rootRect.pivot.x - 0.5f) * width,
                     (rootRect.pivot.y - 0.5f) * height, 0f);
                 Canvas[] sourceCanvases = Root.GetComponentsInChildren<Canvas>(true);
-                float[] referencePixels = new float[sourceCanvases.Length];
-                for (int index = 0; index < sourceCanvases.Length; index++)
-                    referencePixels[index] = sourceCanvases[index].referencePixelsPerUnit;
+                if (sourceCanvases.Length != originalCanvases.Length)
+                    throw new InvalidOperationException("The cloned Canvas hierarchy changed during instantiation. Cannot preserve source PPU safely.");
                 DisableDynamicBehaviours();
                 for (int index = 0; index < sourceCanvases.Length; index++)
                 {
                     Canvas canvas = sourceCanvases[index];
                     canvas.renderMode = RenderMode.WorldSpace;
                     canvas.pixelPerfect = false;
-                    // CanvasScaler.OnDisable resets referencePixelsPerUnit to 100.
-                    // Restore each original Canvas value so sliced/tiled sprites retain their borders.
+                    if (PrefabPsdMetadata.HierarchyPath(canvas.transform, Root.transform) !=
+                        PrefabPsdMetadata.HierarchyPath(originalCanvases[index].transform, source.transform))
+                        throw new InvalidOperationException("The cloned Canvas hierarchy no longer matches the source.");
+                    canvasReferences.Add(canvas, referencePixels[index]);
+                    if (collectDiagnostics)
+                    {
+                        CanvasScaler scaler = originalCanvases[index].GetComponent<CanvasScaler>();
+                        report.CaptureDiagnostics.Add("Source Canvas '" + originalCanvases[index].name +
+                            "': asset=" + EditorUtility.IsPersistent(originalCanvases[index]) +
+                            ", nativePPU=" + originalCanvases[index].referencePixelsPerUnit +
+                            ", scalerEnabled=" + (scaler != null && scaler.enabled) +
+                            ", scalerPPU=" + (scaler == null ? "<none>" : scaler.referencePixelsPerUnit.ToString(CultureInfo.InvariantCulture)) +
+                            ", resolvedPPU=" + referencePixels[index]);
+                    }
                     canvas.referencePixelsPerUnit = referencePixels[index];
                     canvas.scaleFactor = 1f;
                 }
@@ -436,10 +517,12 @@ namespace PrefabToPsd
                 readback = new Texture2D(width, height, TextureFormat.RGBAFloat, false, true);
                 readback.hideFlags = HideFlags.HideAndDontSave;
                 host.SetActive(true);
+                RestoreCanvasReferences();
                 Canvas.ForceUpdateCanvases();
                 LayoutRebuilder.ForceRebuildLayoutImmediate(rootRect);
                 Canvas.ForceUpdateCanvases();
                 FreezeLayouts();
+                RestoreCanvasReferences();
                 allGraphics = Root.GetComponentsInChildren<Graphic>(true);
                 graphicEnabled = new bool[allGraphics.Length];
                 for (int index = 0; index < allGraphics.Length; index++)
@@ -522,10 +605,25 @@ namespace PrefabToPsd
                 {
                     if (control != null) Object.DestroyImmediate(control);
                     Root.SetActive(rootWasActive);
+                    RestoreCanvasReferences();
                     foreach (Graphic graphic in allGraphics)
                         if (graphic.isActiveAndEnabled) graphic.SetAllDirty();
                     Canvas.ForceUpdateCanvases();
                 }
+            }
+
+            private void RestoreCanvasReferences()
+            {
+                bool changed = false;
+                foreach (KeyValuePair<Canvas, float> entry in canvasReferences)
+                {
+                    if (entry.Key.referencePixelsPerUnit == entry.Value) continue;
+                    entry.Key.referencePixelsPerUnit = entry.Value;
+                    changed = true;
+                }
+                if (changed && allGraphics != null)
+                    foreach (Graphic graphic in allGraphics)
+                        if (graphic.isActiveAndEnabled) graphic.SetVerticesDirty();
             }
 
             private void DisableDynamicBehaviours()
@@ -621,6 +719,17 @@ namespace PrefabToPsd
                         canvas == null ? "<none>" : canvas.renderMode.ToString(), renderer.absoluteDepth,
                         renderer.relativeDepth, renderer.cull, renderer.materialCount, graphic.color,
                         renderer.GetColor(), corners[0], corners[2]));
+                    if (canvas != null)
+                    {
+                        float expectedPpu;
+                        string expected = canvasReferences.TryGetValue(canvas, out expectedPpu)
+                            ? expectedPpu.ToString(CultureInfo.InvariantCulture) : "<not snapshotted>";
+                        report.CaptureDiagnostics.Add("Canvas '" + canvas.name + "': capturePPU=" +
+                            canvas.referencePixelsPerUnit + ", expectedPPU=" + expected);
+                    }
+                    Image image = graphic as Image;
+                    if (image != null)
+                        report.CaptureDiagnostics.Add("Image '" + image.name + "': pixelsPerUnit=" + image.pixelsPerUnit);
                 }
             }
 
@@ -711,6 +820,7 @@ namespace PrefabToPsd
                 try
                 {
                     camera.backgroundColor = background;
+                    RestoreCanvasReferences();
                     Canvas.ForceUpdateCanvases();
                     if (emitUiGeometry)
                         CaptureRenderContext.EmitWorldGeometryForSceneView(camera);

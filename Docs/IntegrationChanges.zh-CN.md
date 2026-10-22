@@ -1,6 +1,14 @@
-# Integrated 2.0.1 融合变更与取舍
+# Integrated 2.0.2 融合变更与取舍
 
 日期：2026-10-22（Asia/Shanghai）。基础为此前实现 A，参考本次上传 B：`PrefabToPsd_v1.4.0_SourceFidelity_Unity2018_4_36f1.zip`。本版是独立融合实现，未将存在问题的两套入口并行叠加。安装与命令行用法见 [README](../README.zh-CN.md)，实测结果见 [TestReport.zh-CN.md](TestReport.zh-CN.md)。
+
+## 2.0.2 Canvas PPU补丁
+
+用户v2.0.1截图已通过红蓝、遮罩和CanvasGroup检查，九宫格整体边界也正确，但预期8像素边框处采到了中心颜色。已确认Prefab资产的Canvas native参考PPU不是序列化Scaler配置，原实现误用100而不是配置200；克隆后重挂host及停用Scaler使配置无法重新生效。
+
+本版在源层级中、克隆和停用之前保存PPU意图。持久化资产中原根且启用的Scaler按配置解析；World Space及常规屏幕模式采用Scaler参考PPU，屏幕Constant Physical Size按物理单位换算。场景nativePPU、停用Scaler和原嵌套Scaler不被配置强行覆盖。快照恢复到host及对应Canvas副本，并贯穿激活、校准与渲染。
+
+原8像素边框预期和容差保留；新增48项PPU纯回归，统一托管断言751项通过，原读取器130项单列。另加入资产200／场景200的8像素边框、停用Scaler且runtime300的12像素边框GPU用例；这些新增GPU用例在本环境尚未运行。用户截图也不代表后续全部自测或业务PSD已确认。升级和诊断文件见 [CanvasPpuFix.zh-CN.md](CanvasPpuFix.zh-CN.md)。
 
 ## 2.0.1 空白捕获补丁
 
@@ -12,7 +20,7 @@
 - 校准失败或源合成图全透明时，在PSD写入前停止，保留已有输出。
 - 自测记录完整RGBA、图层／alpha边界、PNG预览、显卡能力和CanvasRenderer状态；新增112项实际私有reader与控制判定托管断言，统一回归合计703项通过，原导入器130项单列。
 
-这版补丁已通过真实Unity2018.4程序集编译和托管回归。本环境没有执行GPU，不能声称Windows故障已实机修好或具体根因完全确认。目标机升级、复测和诊断文件说明见 [BlankCaptureFix.zh-CN.md](BlankCaptureFix.zh-CN.md)。
+这段保留v2.0.1历史变更。用户后续截图已显示该次运行的可见像素、遮罩和CanvasGroup通过，故障推进到上面的PPU检查；本环境仍未执行GPU，也未确认业务PSD最终结果。历史处理说明见 [BlankCaptureFix.zh-CN.md](BlankCaptureFix.zh-CN.md)。
 
 ## 保留 A 的基础
 

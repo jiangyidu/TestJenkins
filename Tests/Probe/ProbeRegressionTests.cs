@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using PrefabToPsd;
 using PrefabToPsd.Core;
+using UnityEngine.UI;
 
 // This invokes the actual private reader used by the GPU self-tests. It does
 // not copy that reader and does not call Unity native APIs or create a camera.
@@ -73,8 +74,11 @@ internal static class ProbeRegressionTests
             }
             int probeAssertions = assertions;
             TestCaptureControl();
+            int controlAssertions = assertions - probeAssertions;
+            TestCanvasReferencePpu();
             Console.WriteLine("Coverage: " + probeAssertions + " private-probe assertions; "
-                + (assertions - probeAssertions) + " capture-control assertions.");
+                + controlAssertions + " capture-control assertions; "
+                + (assertions - probeAssertions - controlAssertions) + " canvas-ppu assertions.");
             Console.WriteLine("PASS: " + assertions + " real-probe regression assertions; no Unity GPU invoked.");
             return 0;
         }
@@ -84,6 +88,113 @@ internal static class ProbeRegressionTests
                 ? exception.InnerException : exception);
             return 1;
         }
+    }
+
+    private static void TestCanvasReferencePpu()
+    {
+        float restored = PpuCase(100f, true, true, CanvasScaler.ScaleMode.ConstantPixelSize,
+            200f, CanvasScaler.Unit.Points, 96f, 200f,
+            "A persistent prefab's native default 100 cannot replace its configured reference PPU 200.");
+        Check(Math.Abs(4f * restored / 100f - 8f) < 0.00001f,
+            "The reported 4px sprite border at sprite PPU100 resolves to 8 canvas units at reference PPU200.");
+        PpuCase(300f, false, false, CanvasScaler.ScaleMode.ConstantPhysicalSize,
+            200f, CanvasScaler.Unit.Points, 96f, 300f,
+            "A live scene's authoritative native PPU 300 is preserved.");
+        PpuCase(275f, false, false, CanvasScaler.ScaleMode.ConstantPhysicalSize,
+            96f, CanvasScaler.Unit.Points, 96f, 275f,
+            "A disabled scaler contributes no physical-mode conversion.");
+        PpuCase(325f, false, true, CanvasScaler.ScaleMode.ConstantPixelSize,
+            200f, CanvasScaler.Unit.Inches, 96f, 325f,
+            "A nested scaler that does not apply cannot override the native canvas reference.");
+        PpuCase(100f, true, false, CanvasScaler.ScaleMode.ConstantPixelSize,
+            200f, CanvasScaler.Unit.Points, 0f, 200f,
+            "Screen ConstantPixelSize uses configured PPU and ignores the unused sprite DPI.");
+        PpuCase(100f, true, false, CanvasScaler.ScaleMode.ScaleWithScreenSize,
+            250f, CanvasScaler.Unit.Points, Single.NaN, 250f,
+            "ScaleWithScreenSize preserves configured PPU instead of applying physical units.");
+        PpuCase(100f, true, true, CanvasScaler.ScaleMode.ConstantPhysicalSize,
+            200f, (CanvasScaler.Unit)999, Single.NaN, 200f,
+            "WorldSpace keeps configured PPU even when physical-mode-only inputs are invalid.");
+        PpuCase(100f, true, true, (CanvasScaler.ScaleMode)999,
+            200f, (CanvasScaler.Unit)999, Single.NaN, 200f,
+            "WorldSpace bypasses all screen-mode inputs, including an unused mode enum.");
+        PpuCase(300f, false, false, (CanvasScaler.ScaleMode)999,
+            Single.NaN, (CanvasScaler.Unit)999, Single.NaN, 300f,
+            "An inapplicable scaler does not inspect any invalid scaler-only settings.");
+        PpuCase(Single.NaN, true, false, CanvasScaler.ScaleMode.ConstantPixelSize,
+            200f, CanvasScaler.Unit.Points, 0f, 200f,
+            "An unused native placeholder does not prevent restoration of a valid persistent scaler setting.");
+        PpuCase(Single.Epsilon, false, false, CanvasScaler.ScaleMode.ConstantPixelSize,
+            200f, CanvasScaler.Unit.Points, 96f, Single.Epsilon,
+            "A positive finite native subnormal value is preserved without imposing an arbitrary minimum.");
+
+        CanvasScaler.Unit[] units = { CanvasScaler.Unit.Centimeters, CanvasScaler.Unit.Millimeters,
+            CanvasScaler.Unit.Inches, CanvasScaler.Unit.Points, CanvasScaler.Unit.Picas };
+        float[] expected = { 2.54f, 25.4f, 1f, 72f, 6f };
+        for (int index = 0; index < units.Length; index++)
+            PpuCase(100f, true, false, CanvasScaler.ScaleMode.ConstantPhysicalSize,
+                96f, units[index], 96f, expected[index],
+                "Screen physical " + units[index] + " uses the correct unit DPI rather than device DPI.");
+        PpuCase(100f, true, false, CanvasScaler.ScaleMode.ConstantPhysicalSize,
+            200f, CanvasScaler.Unit.Points, 100f, 144f,
+            "Physical conversion respects both non-default reference PPU and default sprite DPI.");
+        PpuCase(100f, true, false, CanvasScaler.ScaleMode.ConstantPhysicalSize,
+            Single.MaxValue, CanvasScaler.Unit.Points, Single.MaxValue, 72f,
+            "A finite physical result is retained when float-only intermediate multiplication would overflow.");
+
+        float[] invalid = { 0f, -1f, Single.NaN, Single.PositiveInfinity, Single.NegativeInfinity };
+        foreach (float value in invalid)
+        {
+            float bad = value;
+            PpuThrows(delegate { PrefabPsdExporter.ResolveCanvasReferencePpu(bad, false, true,
+                CanvasScaler.ScaleMode.ConstantPixelSize, 200f, CanvasScaler.Unit.Points, 96f); },
+                "An invalid native PPU is rejected when the native value is authoritative: " + value);
+            PpuThrows(delegate { PrefabPsdExporter.ResolveCanvasReferencePpu(100f, true, true,
+                CanvasScaler.ScaleMode.ConstantPhysicalSize, bad, CanvasScaler.Unit.Points, 96f); },
+                "An invalid active scaler reference PPU is rejected: " + value);
+            PpuThrows(delegate { PrefabPsdExporter.ResolveCanvasReferencePpu(100f, true, false,
+                CanvasScaler.ScaleMode.ConstantPhysicalSize, 200f, CanvasScaler.Unit.Points, bad); },
+                "An invalid default sprite DPI is rejected when physical conversion uses it: " + value);
+            PpuCase(300f, false, true, CanvasScaler.ScaleMode.ConstantPhysicalSize,
+                value, (CanvasScaler.Unit)999, value, 300f,
+                "Inactive scaler values are irrelevant to native scene PPU: " + value);
+            PpuCase(100f, true, true, CanvasScaler.ScaleMode.ConstantPhysicalSize,
+                200f, (CanvasScaler.Unit)999, value, 200f,
+                "WorldSpace does not read the unused physical default sprite DPI: " + value);
+        }
+        PpuThrows(delegate { PrefabPsdExporter.ResolveCanvasReferencePpu(100f, true, false,
+            CanvasScaler.ScaleMode.ConstantPhysicalSize, 200f, (CanvasScaler.Unit)999, 96f); },
+            "An unknown physical unit is rejected when its conversion factor is needed.");
+        PpuThrows(delegate { PrefabPsdExporter.ResolveCanvasReferencePpu(100f, true, false,
+            (CanvasScaler.ScaleMode)999, 200f, CanvasScaler.Unit.Points, 96f); },
+            "An unknown active screen scale mode is rejected instead of selecting a guessed conversion.");
+        PpuThrows(delegate { PrefabPsdExporter.ResolveCanvasReferencePpu(100f, true, false,
+            CanvasScaler.ScaleMode.ConstantPhysicalSize, Single.MaxValue, CanvasScaler.Unit.Points, 1f); },
+            "A physical conversion result above the finite float range is rejected.");
+        PpuThrows(delegate { PrefabPsdExporter.ResolveCanvasReferencePpu(100f, true, false,
+            CanvasScaler.ScaleMode.ConstantPhysicalSize, Single.Epsilon, CanvasScaler.Unit.Inches, Single.MaxValue); },
+            "A physical conversion that underflows to zero is rejected.");
+    }
+
+    private static float PpuCase(float nativePpu, bool scalerApplies, bool worldSpace,
+        CanvasScaler.ScaleMode mode, float referencePpu, CanvasScaler.Unit unit, float spriteDpi,
+        float expected, string message)
+    {
+        float actual = PrefabPsdExporter.ResolveCanvasReferencePpu(nativePpu, scalerApplies,
+            worldSpace, mode, referencePpu, unit, spriteDpi);
+        double tolerance = Math.Max((double)Single.Epsilon * 0.5, Math.Abs((double)expected) * 0.000001);
+        Check(actual > 0f && !Single.IsNaN(actual) && !Single.IsInfinity(actual)
+            && Math.Abs((double)actual - expected) <= tolerance,
+            message + " Expected " + expected + ", got " + actual + ".");
+        return actual;
+    }
+
+    private static void PpuThrows(Action action, string message)
+    {
+        bool rejected = false;
+        try { action(); }
+        catch (ArgumentOutOfRangeException) { rejected = true; }
+        Check(rejected, message);
     }
 
     private static void TestCaptureControl()
