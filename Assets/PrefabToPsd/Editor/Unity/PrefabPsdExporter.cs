@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using PrefabToPsd.Core;
@@ -10,6 +11,11 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
+#if UNITY_2019_1_OR_NEWER
+using CaptureRenderContext = UnityEngine.Rendering.ScriptableRenderContext;
+#else
+using CaptureRenderContext = UnityEngine.Experimental.Rendering.ScriptableRenderContext;
+#endif
 
 namespace PrefabToPsd
 {
@@ -49,13 +55,13 @@ namespace PrefabToPsd
             if (options.Width > 0) width = options.Width;
             if (options.Height > 0) height = options.Height;
             ValidateSize(width, height, options.MemoryBudgetMB);
-            if (!SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
-                !SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat))
-                throw new NotSupportedException("The current graphics device does not support floating-point capture. Use a graphics-enabled Unity Editor (do not pass -nographics).");
+            RenderTextureFormat captureFormat = ResolveCaptureFormat();
 
             ExportReport report = new ExportReport();
             report.Width = width;
             report.Height = height;
+            if (captureFormat == RenderTextureFormat.ARGBHalf)
+                report.Warnings.Add("ARGBFloat rendering with alpha blending is unavailable on this device. Capture uses blend-capable ARGBHalf with floating-point readback.");
             report.PsdPath = Path.GetFullPath(psdPath);
             if (options.PreserveEmptyGroups && !options.PreserveHierarchy)
                 report.Warnings.Add("Empty group retention requires hierarchy; the current flat export omits empty folders. Source layout remains in JSON when enabled.");
@@ -72,7 +78,8 @@ namespace PrefabToPsd
             ReportProgress(options, 0f, "Preparing isolated UI snapshot");
             PrefabPsdMetadataDocument metadata = PrefabPsdMetadata.Create(source, width, height, report.Warnings);
 
-            using (CaptureSession session = new CaptureSession(source, width, height, report))
+            using (CaptureSession session = new CaptureSession(source, width, height, report,
+                captureFormat, options.CollectCaptureDiagnostics))
             {
                 session.Prepare();
                 List<Graphic> graphics = session.GetVisibleGraphics();
@@ -88,6 +95,10 @@ namespace PrefabToPsd
                 ReportProgress(options, 0.04f, "Capturing complete UI");
                 document.CompositeRgba = session.CaptureRgba();
                 session.RememberRenderedDepths();
+                if (!HasNonTransparentPixels(document.CompositeRgba))
+                    throw new InvalidOperationException("The source UI capture is fully transparent; no PSD was written or replaced. " +
+                        "The UI calibration passed. Check source Canvas/CanvasGroup alpha, masks, materials and layout. " +
+                        string.Join(" | ", report.CaptureDiagnostics.ToArray()));
                 Dictionary<Graphic, PsdLayer> layers = new Dictionary<Graphic, PsdLayer>();
                 long retainedBytes = document.CompositeRgba.LongLength;
                 long budget = options.MemoryBudgetMB * 1024L * 1024L;
@@ -165,6 +176,55 @@ namespace PrefabToPsd
             }
             // Do not invoke cancellable progress after output has been committed.
             return report;
+        }
+
+        private static RenderTextureFormat ResolveCaptureFormat()
+        {
+            if (!SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat))
+                throw new NotSupportedException("The graphics device cannot read back floating-point RGBA. Use a graphics-enabled Unity Editor (do not pass -nographics).");
+            // A renderable format is not necessarily blendable on Direct3D devices.
+            // UI/Default needs alpha blending for both black/white recovery passes.
+            if (SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) &&
+                SystemInfo.SupportsBlendingOnRenderTextureFormat(RenderTextureFormat.ARGBFloat))
+                return RenderTextureFormat.ARGBFloat;
+            if (SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBHalf) &&
+                SystemInfo.SupportsBlendingOnRenderTextureFormat(RenderTextureFormat.ARGBHalf))
+                return RenderTextureFormat.ARGBHalf;
+            throw new NotSupportedException("The graphics device does not support floating-point render targets with alpha blending (ARGBFloat/ARGBHalf). Use a compatible graphics-enabled Unity Editor.");
+        }
+
+        private static bool HasNonTransparentPixels(byte[] rgba)
+        {
+            for (int index = 3; index < rgba.Length; index += 4)
+                if (rgba[index] != 0) return true;
+            return false;
+        }
+
+        // A half-transparent red control detects absent geometry, lost blending,
+        // double emission and incorrect readback without relying on source content.
+        internal static bool CheckCaptureControl(byte[] rgba, int width, int height, out string detail)
+        {
+            if (width < 1 || height < 1 || rgba == null || rgba.LongLength != (long)width * height * 4L)
+            {
+                detail = "Invalid control image dimensions.";
+                return false;
+            }
+            int[] xs = { 0, width / 2, width - 1 };
+            int[] ys = { 0, height / 2, height - 1 };
+            foreach (int y in ys)
+                foreach (int x in xs)
+                {
+                    int pixel = (y * width + x) * 4;
+                    if (Math.Abs(rgba[pixel] - 255) > 4 || rgba[pixel + 1] > 4 ||
+                        rgba[pixel + 2] > 4 || Math.Abs(rgba[pixel + 3] - 128) > 4)
+                    {
+                        detail = "Control at (" + x + "," + y + ") expected RGBA=(255,0,0,128), got (" +
+                            rgba[pixel] + "," + rgba[pixel + 1] + "," + rgba[pixel + 2] + "," + rgba[pixel + 3] + ").";
+                        return false;
+                    }
+                }
+            detail = "Half-transparent red UI control passed.";
+            return true;
         }
 
         public static void ResolveCanvasSize(GameObject source, out int width, out int height)
@@ -270,6 +330,9 @@ namespace PrefabToPsd
             private readonly int height;
             private readonly ExportReport report;
             private readonly GameObject source;
+            private readonly RenderTextureFormat captureFormat;
+            private readonly bool collectDiagnostics;
+            private bool emitUiGeometry;
             private Scene scene;
             private GameObject host;
             private Camera camera;
@@ -285,12 +348,15 @@ namespace PrefabToPsd
             private bool disposed;
             public GameObject Root { get; private set; }
 
-            public CaptureSession(GameObject source, int width, int height, ExportReport report)
+            public CaptureSession(GameObject source, int width, int height, ExportReport report,
+                RenderTextureFormat captureFormat, bool collectDiagnostics)
             {
                 this.source = source;
                 this.width = width;
                 this.height = height;
                 this.report = report;
+                this.captureFormat = captureFormat;
+                this.collectDiagnostics = collectDiagnostics;
             }
 
             public void Prepare()
@@ -341,7 +407,9 @@ namespace PrefabToPsd
                 camera = cameraObject.GetComponent<Camera>();
                 camera.scene = scene;
                 camera.enabled = false;
-                camera.cameraType = CameraType.Preview;
+                // Use the ordinary UGUI camera path even though the objects live in
+                // an isolated preview scene. Preview cameras can omit UI geometry.
+                camera.cameraType = CameraType.Game;
                 camera.transform.position = new Vector3(0f, 0f, -10000f);
                 camera.transform.rotation = Quaternion.identity;
                 camera.orthographic = true;
@@ -358,7 +426,7 @@ namespace PrefabToPsd
                 hostCanvas.worldCamera = camera;
                 foreach (Canvas canvas in Root.GetComponentsInChildren<Canvas>(true))
                     canvas.worldCamera = camera;
-                target = new RenderTexture(width, height, 24, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+                target = new RenderTexture(width, height, 24, captureFormat, RenderTextureReadWrite.Linear);
                 target.hideFlags = HideFlags.HideAndDontSave;
                 target.antiAliasing = 1;
                 target.useMipMap = false;
@@ -393,6 +461,70 @@ namespace PrefabToPsd
                     maskShowsGraphic[index] = masks[index].showMaskGraphic;
                     maskEnabled[index] = masks[index].enabled && masks[index].gameObject.activeInHierarchy &&
                         masks[index].graphic != null && masks[index].graphic.enabled;
+                }
+                ValidateCapturePipeline();
+            }
+
+            private void ValidateCapturePipeline()
+            {
+                bool rootWasActive = Root.activeSelf;
+                GameObject control = null;
+                List<string> attempts = new List<string>();
+                try
+                {
+                    Root.SetActive(false);
+                    control = new GameObject("PrefabToPsd Capture Control", typeof(RectTransform), typeof(Image));
+                    control.hideFlags = HideFlags.HideAndDontSave;
+                    RectTransform rect = (RectTransform)control.transform;
+                    rect.SetParent(host.transform, false);
+                    rect.anchorMin = Vector2.zero;
+                    rect.anchorMax = Vector2.one;
+                    rect.offsetMin = rect.offsetMax = Vector2.zero;
+                    Image image = control.GetComponent<Image>();
+                    image.raycastTarget = false;
+                    image.color = new Color(1f, 0f, 0f, 0.5f);
+                    CameraType[] types = { CameraType.Game, CameraType.SceneView, CameraType.SceneView, CameraType.Preview };
+                    for (int index = 0; index < types.Length; index++)
+                    {
+                        camera.cameraType = types[index];
+                        emitUiGeometry = index >= 2;
+                        control.SetActive(true);
+                        image.SetAllDirty();
+                        Canvas.ForceUpdateCanvases();
+                        string detail;
+                        bool valid = CheckCaptureControl(CaptureRgba(), width, height, out detail);
+                        string attempt = types[index] + (emitUiGeometry ? " + explicit UI geometry: " : ": ") + detail;
+                        attempts.Add(attempt);
+                        report.CaptureDiagnostics.Add(attempt);
+                        if (!valid) continue;
+                        // Explicit emission can persist in a native camera cache. A
+                        // negative control ensures the marker cannot leak into the PSD.
+                        control.SetActive(false);
+                        Canvas.ForceUpdateCanvases();
+                        if (HasNonTransparentPixels(CaptureRgba()))
+                        {
+                            string residue = types[index] + ": hidden UI control still produced pixels.";
+                            attempts.Add(residue);
+                            report.CaptureDiagnostics.Add(residue);
+                            continue;
+                        }
+                        if (index != 0)
+                            WarnOnce("The ordinary UI camera did not pass calibration. Capture uses a calibrated " + types[index] +
+                                " camera" + (emitUiGeometry ? " with explicit UI geometry emission." : "."));
+                        return;
+                    }
+                    throw new InvalidOperationException("UI capture calibration failed before PSD writing. " +
+                        "Device=" + SystemInfo.graphicsDeviceName + ", API=" + SystemInfo.graphicsDeviceType +
+                        ", RT=" + target.format + ". " + string.Join(" | ", attempts.ToArray()) +
+                        " Existing output files were not replaced. Run Tools/Prefab to PSD/Run Self Tests and inspect self-test-report.txt.");
+                }
+                finally
+                {
+                    if (control != null) Object.DestroyImmediate(control);
+                    Root.SetActive(rootWasActive);
+                    foreach (Graphic graphic in allGraphics)
+                        if (graphic.isActiveAndEnabled) graphic.SetAllDirty();
+                    Canvas.ForceUpdateCanvases();
                 }
             }
 
@@ -470,6 +602,26 @@ namespace PrefabToPsd
                 // some Unity versions report -1 for absoluteDepth.
                 foreach (Graphic graphic in allGraphics)
                     originalDepths[graphic] = graphic.canvasRenderer.absoluteDepth;
+                if (!collectDiagnostics) return;
+                report.CaptureDiagnostics.Add("Capture RT=" + target.format + ", size=" + width + "x" + height +
+                    ", cameraType=" + camera.cameraType + ", cameraPosition=" + camera.transform.position +
+                    ", orthographicSize=" + camera.orthographicSize + ", aspect=" + camera.aspect);
+                Vector3[] corners = new Vector3[4];
+                foreach (Graphic graphic in allGraphics)
+                {
+                    CanvasRenderer renderer = graphic.canvasRenderer;
+                    Canvas canvas = graphic.canvas;
+                    graphic.rectTransform.GetWorldCorners(corners);
+                    report.CaptureDiagnostics.Add(string.Format(CultureInfo.InvariantCulture,
+                        "Graphic '{0}': enabled={1}, active={2}, layer={3}, canvas={4}, canvasMode={5}, " +
+                        "absoluteDepth={6}, relativeDepth={7}, cull={8}, materials={9}, color={10}, " +
+                        "rendererColor={11}, worldBottomLeft={12}, worldTopRight={13}",
+                        graphic.name, graphic.enabled, graphic.gameObject.activeInHierarchy,
+                        graphic.gameObject.layer, canvas == null ? "<none>" : canvas.name,
+                        canvas == null ? "<none>" : canvas.renderMode.ToString(), renderer.absoluteDepth,
+                        renderer.relativeDepth, renderer.cull, renderer.materialCount, graphic.color,
+                        renderer.GetColor(), corners[0], corners[2]));
+                }
             }
 
             private Canvas SortingCanvas(Graphic graphic)
@@ -560,6 +712,8 @@ namespace PrefabToPsd
                 {
                     camera.backgroundColor = background;
                     Canvas.ForceUpdateCanvases();
+                    if (emitUiGeometry)
+                        CaptureRenderContext.EmitWorldGeometryForSceneView(camera);
                     camera.Render();
                     RenderTexture.active = target;
                     readback.ReadPixels(new Rect(0f, 0f, width, height), 0, 0, false);

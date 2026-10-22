@@ -1,0 +1,114 @@
+PASS The real GPU self-test reader is located by reflection.
+PASS The real private PsdProbe.Read method is available.
+PASS Raw: Non-square 96x64 dimensions are preserved.
+PASS Raw: Merged transparency channel is present.
+PASS Raw: Four pixel records and two folder dividers are parsed.
+PASS Raw: Unicode layer and folder names survive before merged image parsing.
+PASS Raw: Transparent outside expected RGBA(0,0,0,0) got(0,0,0,0) at(2,2).
+PASS Raw: Exact reported Red only sample expected RGBA(255,0,0,128) got(255,0,0,128) at(10,10).
+PASS Raw: Blue only sample expected RGBA(0,0,255,128) got(0,0,255,128) at(38,25).
+PASS Raw: Blue-over-red white-matte recovery expected RGBA(85,0,170,192) got(85,0,170,192) at(24,16).
+PASS Raw: Vertical mirror of red is transparent expected RGBA(0,0,0,0) got(0,0,0,0) at(10,53).
+PASS Raw: Horizontal mirror of red is transparent expected RGBA(0,0,0,0) got(0,0,0,0) at(85,10).
+PASS Raw: Asymmetric lower-right marker expected RGBA(31,211,73,255) got(31,211,73,255) at(90,55).
+PASS Raw: Marker cannot silently pass a vertical flip expected RGBA(0,0,0,0) got(0,0,0,0) at(90,8).
+PASS Raw: Primary color with alpha 1 expected RGBA(255,0,0,1) got(255,0,0,1) at(3,60).
+PASS Raw: Primary color with alpha 2 expected RGBA(0,0,255,2) got(0,0,255,2) at(4,60).
+PASS Raw: Primary color with alpha 63 expected RGBA(255,0,0,63) got(255,0,0,63) at(5,60).
+PASS Raw: Primary color with alpha 127 expected RGBA(0,0,255,127) got(0,0,255,127) at(6,60).
+PASS Raw: Primary color with alpha 128 expected RGBA(255,0,0,128) got(255,0,0,128) at(7,60).
+PASS Raw: Primary color with alpha 192 expected RGBA(0,0,255,192) got(0,0,255,192) at(8,60).
+PASS Raw: Primary color with alpha 254 expected RGBA(255,0,0,254) got(255,0,0,254) at(9,60).
+PASS Raw: Primary color with alpha 255 expected RGBA(0,0,255,255) got(0,0,255,255) at(10,60).
+PASS Raw: Every merged RGBA byte matches the independently specified fixture.
+PASS Raw: Exact top-left bounds for Lower-right marker
+PASS Raw: Straight layer RGBA remains exact for Lower-right marker
+PASS Raw: Exact top-left bounds for Alpha edge values
+PASS Raw: Straight layer RGBA remains exact for Alpha edge values
+PASS Raw: Exact top-left bounds for Blue front
+PASS Raw: Straight layer RGBA remains exact for Blue front
+PASS Raw: Exact top-left bounds for 红色半透明
+PASS Raw: Straight layer RGBA remains exact for 红色半透明
+PASS Rle: Non-square 96x64 dimensions are preserved.
+PASS Rle: Merged transparency channel is present.
+PASS Rle: Four pixel records and two folder dividers are parsed.
+PASS Rle: Unicode layer and folder names survive before merged image parsing.
+PASS Rle: Transparent outside expected RGBA(0,0,0,0) got(0,0,0,0) at(2,2).
+PASS Rle: Exact reported Red only sample expected RGBA(255,0,0,128) got(255,0,0,128) at(10,10).
+PASS Rle: Blue only sample expected RGBA(0,0,255,128) got(0,0,255,128) at(38,25).
+PASS Rle: Blue-over-red white-matte recovery expected RGBA(85,0,170,192) got(85,0,170,192) at(24,16).
+PASS Rle: Vertical mirror of red is transparent expected RGBA(0,0,0,0) got(0,0,0,0) at(10,53).
+PASS Rle: Horizontal mirror of red is transparent expected RGBA(0,0,0,0) got(0,0,0,0) at(85,10).
+PASS Rle: Asymmetric lower-right marker expected RGBA(31,211,73,255) got(31,211,73,255) at(90,55).
+PASS Rle: Marker cannot silently pass a vertical flip expected RGBA(0,0,0,0) got(0,0,0,0) at(90,8).
+PASS Rle: Primary color with alpha 1 expected RGBA(255,0,0,1) got(255,0,0,1) at(3,60).
+PASS Rle: Primary color with alpha 2 expected RGBA(0,0,255,2) got(0,0,255,2) at(4,60).
+PASS Rle: Primary color with alpha 63 expected RGBA(255,0,0,63) got(255,0,0,63) at(5,60).
+PASS Rle: Primary color with alpha 127 expected RGBA(0,0,255,127) got(0,0,255,127) at(6,60).
+PASS Rle: Primary color with alpha 128 expected RGBA(255,0,0,128) got(255,0,0,128) at(7,60).
+PASS Rle: Primary color with alpha 192 expected RGBA(0,0,255,192) got(0,0,255,192) at(8,60).
+PASS Rle: Primary color with alpha 254 expected RGBA(255,0,0,254) got(255,0,0,254) at(9,60).
+PASS Rle: Primary color with alpha 255 expected RGBA(0,0,255,255) got(0,0,255,255) at(10,60).
+PASS Rle: Every merged RGBA byte matches the independently specified fixture.
+PASS Rle: Exact top-left bounds for Lower-right marker
+PASS Rle: Straight layer RGBA remains exact for Lower-right marker
+PASS Rle: Exact top-left bounds for Alpha edge values
+PASS Rle: Straight layer RGBA remains exact for Alpha edge values
+PASS Rle: Exact top-left bounds for Blue front
+PASS Rle: Straight layer RGBA remains exact for Blue front
+PASS Rle: Exact top-left bounds for 红色半透明
+PASS Rle: Straight layer RGBA remains exact for 红色半透明
+PASS Raw and RLE yield identical merged bytes through the real private reader.
+PASS Full-canvas half-transparent red control passes. Half-transparent red UI control passed.
+PASS Successful calibration validation does not mutate image bytes.
+PASS A 1x1 capture is valid even though the nine control samples coincide. Half-transparent red UI control passed.
+PASS Small non-square dimensions are sampled safely. Half-transparent red UI control passed.
+PASS An absent all-transparent UI control cannot pass calibration. Control at (0,0) expected RGBA=(255,0,0,128), got (0,0,0,0).
+PASS An opaque capture cannot be mistaken for the expected half transparency. Control at (0,0) expected RGBA=(255,0,0,128), got (255,0,0,255).
+PASS Double emission of half-transparent geometry is rejected. Control at (0,0) expected RGBA=(255,0,0,128), got (255,0,0,191).
+PASS A swapped red/blue channel or wrong UI color is rejected. Control at (0,0) expected RGBA=(255,0,0,128), got (0,0,255,128).
+PASS Premultiplied RGB cannot masquerade as the straight-red capture control. Control at (0,0) expected RGBA=(255,0,0,128), got (128,0,0,128).
+PASS Clipped control sample at (0,0) is rejected. Control at (0,0) expected RGBA=(255,0,0,128), got (0,0,0,0).
+PASS The failed sample reports its actual coordinates and RGBA.
+PASS Failed calibration validation does not mutate image bytes.
+PASS Clipped control sample at (48,0) is rejected. Control at (48,0) expected RGBA=(255,0,0,128), got (0,0,0,0).
+PASS The failed sample reports its actual coordinates and RGBA.
+PASS Failed calibration validation does not mutate image bytes.
+PASS Clipped control sample at (95,0) is rejected. Control at (95,0) expected RGBA=(255,0,0,128), got (0,0,0,0).
+PASS The failed sample reports its actual coordinates and RGBA.
+PASS Failed calibration validation does not mutate image bytes.
+PASS Clipped control sample at (0,32) is rejected. Control at (0,32) expected RGBA=(255,0,0,128), got (0,0,0,0).
+PASS The failed sample reports its actual coordinates and RGBA.
+PASS Failed calibration validation does not mutate image bytes.
+PASS Clipped control sample at (48,32) is rejected. Control at (48,32) expected RGBA=(255,0,0,128), got (0,0,0,0).
+PASS The failed sample reports its actual coordinates and RGBA.
+PASS Failed calibration validation does not mutate image bytes.
+PASS Clipped control sample at (95,32) is rejected. Control at (95,32) expected RGBA=(255,0,0,128), got (0,0,0,0).
+PASS The failed sample reports its actual coordinates and RGBA.
+PASS Failed calibration validation does not mutate image bytes.
+PASS Clipped control sample at (0,63) is rejected. Control at (0,63) expected RGBA=(255,0,0,128), got (0,0,0,0).
+PASS The failed sample reports its actual coordinates and RGBA.
+PASS Failed calibration validation does not mutate image bytes.
+PASS Clipped control sample at (48,63) is rejected. Control at (48,63) expected RGBA=(255,0,0,128), got (0,0,0,0).
+PASS The failed sample reports its actual coordinates and RGBA.
+PASS Failed calibration validation does not mutate image bytes.
+PASS Clipped control sample at (95,63) is rejected. Control at (95,63) expected RGBA=(255,0,0,128), got (0,0,0,0).
+PASS The failed sample reports its actual coordinates and RGBA.
+PASS Failed calibration validation does not mutate image bytes.
+PASS A null image fails safely. Invalid control image dimensions.
+PASS Zero width fails safely. Invalid control image dimensions.
+PASS Zero height fails safely. Invalid control image dimensions.
+PASS Negative width fails safely. Invalid control image dimensions.
+PASS Negative height fails safely. Invalid control image dimensions.
+PASS A mismatched row count fails before sampling. Invalid control image dimensions.
+PASS A truncated RGBA pixel fails before sampling. Invalid control image dimensions.
+PASS Huge dimension products cannot index a small supplied buffer. Invalid control image dimensions.
+PASS Inclusive lower alpha/red and upper green/blue tolerance boundaries pass. Half-transparent red UI control passed.
+PASS Inclusive upper alpha tolerance boundary passes. Half-transparent red UI control passed.
+PASS Red just outside the tolerance is rejected. Control at (0,0) expected RGBA=(255,0,0,128), got (250,0,0,128).
+PASS Green just outside the tolerance is rejected. Control at (0,0) expected RGBA=(255,0,0,128), got (255,5,0,128).
+PASS Blue just outside the tolerance is rejected. Control at (0,0) expected RGBA=(255,0,0,128), got (255,0,5,128).
+PASS Alpha just below the tolerance is rejected. Control at (0,0) expected RGBA=(255,0,0,128), got (255,0,0,123).
+PASS Alpha just above the tolerance is rejected. Control at (0,0) expected RGBA=(255,0,0,128), got (255,0,0,133).
+Coverage: 61 private-probe assertions; 51 capture-control assertions.
+PASS: 112 real-probe regression assertions; no Unity GPU invoked.

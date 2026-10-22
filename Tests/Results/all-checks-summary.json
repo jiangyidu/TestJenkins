@@ -1,6 +1,6 @@
 {
   "target_unity": "2018.4.36f1",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "jobs": [
     {
       "name": "compile",
@@ -19,6 +19,10 @@
       "exit_code": 0
     },
     {
+      "name": "probe",
+      "exit_code": 0
+    },
+    {
       "name": "original-reader",
       "exit_code": 0
     }
@@ -28,7 +32,8 @@
   "core_assertions": 446,
   "reference_assertions": 37,
   "workflow_assertions": 108,
-  "managed_assertions": 591,
+  "probe_assertions": 112,
+  "managed_assertions": 703,
   "independent_psd_files": 7,
   "independent_icc_profiles": 2,
   "original_reader_assertions": 130,
@@ -41,12 +46,12 @@
     "Assets/PrefabToPsd/Editor/PrefabPsdBatch.cs": "df3b98f0da59de23021065d5ee93d70c6b52fb17efaef40f5e8c9fdfdb4813df",
     "Assets/PrefabToPsd/Editor/PrefabPsdWindow.cs": "912cc52bdae6e89c1677b4dc2e1b23d38dd6bd18bae2a6d1ebdb1e570f7c0840",
     "Assets/PrefabToPsd/Editor/Tests/PrefabPsdDemo.cs": "89f60990da0a6f869b68d44d1ed6704dca016b9bdd4d912b61785650c5202fd2",
-    "Assets/PrefabToPsd/Editor/Tests/PrefabPsdSelfTests.cs": "d7356a2321e05214761dce0782f40e2ed512c1c08b5b3b2fe95f69a51e29818a",
+    "Assets/PrefabToPsd/Editor/Tests/PrefabPsdSelfTests.cs": "f9e72eb3ab66b53d8da8b7d28d3c455325b66e3737a2b8aa21091881fce5b756",
     "Assets/PrefabToPsd/Editor/Tests/PrefabPsdWorkflowSelfTests.cs": "d2eec8db790efaf263d6f44ac34c30aba671de0e1891a44cbb63e45402ae7b84",
     "Assets/PrefabToPsd/Editor/Unity/PrefabPsdBatchService.cs": "88d30e085357dd7857ce0ca4f7c770e3f52944963ec815fbc37f47120967f04a",
-    "Assets/PrefabToPsd/Editor/Unity/PrefabPsdExporter.cs": "332297b4f8294b1344839d0b05a4d549437739d0a3cf4eca6e2515a913b399a4",
+    "Assets/PrefabToPsd/Editor/Unity/PrefabPsdExporter.cs": "01dfea135bbbda8e50a579c7bf4240791a22ff43ed05a65ef9e05a3ebcfaeef0",
     "Assets/PrefabToPsd/Editor/Unity/PrefabPsdMetadata.cs": "3166215c856e7e181e0e0871fdbcf69fd580f65ba429b5796b1ac2e2e7e2976b",
-    "Assets/PrefabToPsd/Editor/Unity/PrefabPsdOptions.cs": "ad861fdc4403ce629d7ab0debce6c65b0e5908ce9c02193f1acc25718de56928",
+    "Assets/PrefabToPsd/Editor/Unity/PrefabPsdOptions.cs": "b996786af0b544151b0e5e59ba95b066437301df1064ef3f995a59a5bbc72e76",
     "Assets/PrefabToPsd/Editor/Unity/PrefabPsdReference.cs": "1936b9e6bc32c4c3ecae253ca40d6ddf1ef4b5ee44d9675efb3caa4c2cda7c5d",
     "Assets/PrefabToPsd/Editor/Unity/PrefabPsdWorkflow.cs": "aa12b0bb8c237d724d833e69dde5f4d368c1b502f941493aae1608e12bb0d611"
   }

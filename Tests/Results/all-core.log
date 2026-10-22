@@ -1,4 +1,4 @@
-PASS: 267 core assertions. Fixtures: /workspace/work/PrefabToPsd_Integrated/Tests/Results/integrated-core/baseline/fixtures
+PASS: 267 core assertions. Fixtures: /workspace/work/TestJenkins_PrefabToPsd/Tests/Results/integrated-core/baseline/fixtures
 PASS complex_raw.psd: 8 records; layer RGBA/matte bytes exact; independent composite within tolerance
 PASS complex_rle.psd: 8 records; layer RGBA/matte bytes exact; independent composite within tolerance
 PASS empty_rle.psd: 1 records; layer RGBA/matte bytes exact; independent composite within tolerance

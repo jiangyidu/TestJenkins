@@ -17,7 +17,7 @@ namespace PrefabToPsd
     [Serializable]
     public sealed class ExportOptions
     {
-        public const string Version = "2.0.0";
+        public const string Version = "2.0.1";
         public int Width;
         public int Height;
         public bool PreserveHierarchy = true;
@@ -34,6 +34,8 @@ namespace PrefabToPsd
         public bool PreserveReferenceNames = true;
         public bool ReuseIdenticalReferencePixels = true;
         public bool CopySafeReferenceResources = true;
+        /// <summary>Collect native Canvas/Graphic state for graphics integration diagnostics.</summary>
+        public bool CollectCaptureDiagnostics;
         /// <summary>Throw OperationCanceledException to cancel before file commit.</summary>
         [NonSerialized] public Action<float, string> Progress;
 
@@ -60,6 +62,7 @@ namespace PrefabToPsd
         public bool ReferenceColorProfileCopied;
         public bool VerificationPassed;
         public readonly List<string> Warnings = new List<string>();
+        public readonly List<string> CaptureDiagnostics = new List<string>();
     }
 }
 #endif

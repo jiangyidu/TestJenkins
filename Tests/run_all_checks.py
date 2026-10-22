@@ -29,12 +29,16 @@ def main():
         ("compile", [sys.executable, str(root / "Tests/compile_unity.py"), str(args.editor)]),
         ("core", ["bash", str(root / "Tests/IntegratedCore/run-integrated-core-tests.sh")]),
         ("reference", [sys.executable, str(root / "Tests/Reference/run_reference_tests.py"), str(args.editor)]),
-        ("workflow", [sys.executable, str(root / "Tests/Workflow/run-workflow-tests.py"), str(args.editor)])
+        ("workflow", [sys.executable, str(root / "Tests/Workflow/run-workflow-tests.py"), str(args.editor)]),
+        ("probe", [sys.executable, str(root / "Tests/Probe/run_probe_tests.py"), str(args.editor),
+                   "--output", str(results / "probe")])
     ]
     if args.original_importer:
         jobs.append(("original-reader", [sys.executable, str(root / "Tests/OriginalReader/run_original_reader.py"),
                                         str(args.editor), str(args.original_importer)]))
-    status = {"target_unity": "2018.4.36f1", "version": "2.0.0", "jobs": [],
+    options_text = (root / "Assets/PrefabToPsd/Editor/Unity/PrefabPsdOptions.cs").read_text(encoding="utf-8")
+    version = re.search(r'const string Version = "([^"]+)"', options_text).group(1)
+    status = {"target_unity": "2018.4.36f1", "version": version, "jobs": [],
               "unity_gpu_executed": False, "photoshop_gui_executed": False}
     summary = results / "all-checks-summary.json"
     for name, command in jobs:
@@ -54,8 +58,10 @@ def main():
     status["core_assertions"] = core["total_managed_assertions"]
     status["reference_assertions"] = int(re.search(r"PASS: (\d+) reference-policy", reference).group(1))
     status["workflow_assertions"] = int(re.search(r"PASS: (\d+) workflow pure", workflow).group(1))
+    probe = json.loads((results / "probe/summary.json").read_text(encoding="utf-8"))
+    status["probe_assertions"] = probe["assertions"]
     status["managed_assertions"] = sum(status[key] for key in
-                                      ("core_assertions", "reference_assertions", "workflow_assertions"))
+                                      ("core_assertions", "reference_assertions", "workflow_assertions", "probe_assertions"))
     status["independent_psd_files"] = core["independent_psd_files"]
     status["independent_icc_profiles"] = core["independent_icc_profiles"]
     if args.original_importer:

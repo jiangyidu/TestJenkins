@@ -1,0 +1,10 @@
+{
+  "exit_code": 0,
+  "assertions": 112,
+  "production_scripts_compiled": 16,
+  "unity_references": 63,
+  "actual_private_probe_invoked": true,
+  "unity_gpu_executed": false,
+  "private_probe_assertions": 61,
+  "capture_control_assertions": 51
+}

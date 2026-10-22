@@ -52,7 +52,16 @@ namespace PrefabToPsd
             {
                 Log("Unity " + Application.unityVersion + ", " + SystemInfo.graphicsDeviceType +
                     ", " + QualitySettings.activeColorSpace + ", " + DateTime.UtcNow.ToString("u"));
+                Log("Exporter " + ExportOptions.Version + "; output: " + output);
+                Log("GPU " + SystemInfo.graphicsDeviceName + "; UV starts at top=" + SystemInfo.graphicsUVStartsAtTop +
+                    "; ARGBFloat render/blend=" + SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) +
+                    "/" + SystemInfo.SupportsBlendingOnRenderTextureFormat(RenderTextureFormat.ARGBFloat) +
+                    "; ARGBHalf render/blend=" + SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBHalf) +
+                    "/" + SystemInfo.SupportsBlendingOnRenderTextureFormat(RenderTextureFormat.ARGBHalf));
+                UnityEngine.Object pipeline = UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset;
+                Log("Render pipeline: " + (pipeline == null ? "Built-in" : pipeline.name + " (" + pipeline.GetType().FullName + ")"));
                 TestCompositeAndPersistence(folder, output);
+                TestFullyTransparentOutput(folder, output);
                 TestMasks(folder, output);
                 TestVisibleMaskIsolation(folder, output);
                 TestGroupAlpha(folder, output);
@@ -97,6 +106,7 @@ namespace PrefabToPsd
                 ExportReport rle = PrefabPsdExporter.Export(prefab, Path.Combine(output, "composite-rle.psd"),
                     Options(PsdCompression.Rle));
                 PsdProbe image = PsdProbe.Read(rle.PsdPath);
+                RecordCaptureArtifacts(image, rle);
                 Assert(image.Width == 96 && image.Height == 64, "PSD dimensions match requested dimensions.");
                 Assert(image.Channels == 4, "Merged image has RGB and transparency.");
                 Assert(rle.LayerCount == 2, "Only the two visible enabled Graphics become pixel layers.");
@@ -134,6 +144,35 @@ namespace PrefabToPsd
                 Assert(Equal(blueLayer.Pixels, rawImage.Layer("Blue front").Pixels), "Raw and RLE blue layer pixels are identical.");
                 Assert(HashFile(assetPath) == before, "Prefab asset bytes remain unchanged after exports.");
                 Assert(HierarchySnapshot(prefab) == hierarchyBefore, "Prefab components remain unchanged.");
+            });
+        }
+
+        private static void TestFullyTransparentOutput(string folder, string output)
+        {
+            WithPrefab(folder + "/FullyTransparent.prefab", delegate(GameObject root)
+            {
+                PrefabPsdDemo.Image(root.transform, "Transparent graphic", 8, 8, 24, 16,
+                    new Color(1f, 0f, 0f, 0f));
+            }, delegate(GameObject prefab)
+            {
+                string path = Path.Combine(output, "transparent-output-must-not-replace.psd");
+                byte[] previous = Encoding.ASCII.GetBytes("previous output must remain unchanged");
+                File.WriteAllBytes(path, previous);
+                bool rejected = false;
+                try { PrefabPsdExporter.Export(prefab, path, Options(PsdCompression.Rle)); }
+                catch (InvalidOperationException exception)
+                {
+                    if (exception.Message.IndexOf("source UI capture is fully transparent", StringComparison.Ordinal) < 0)
+                        throw;
+                    rejected = true;
+                }
+                finally
+                {
+                    byte[] current = File.ReadAllBytes(path);
+                    File.Delete(path);
+                    Assert(Equal(current, previous), "Fully transparent capture preserves existing output bytes.");
+                }
+                Assert(rejected, "Fully transparent source is rejected after successful UI calibration.");
             });
         }
 
@@ -288,7 +327,7 @@ namespace PrefabToPsd
         {
             return new ExportOptions
             {
-                Width = 96, Height = 64, Compression = compression,
+                Width = 96, Height = 64, Compression = compression, CollectCaptureDiagnostics = true,
                 PreserveHierarchy = true, WriteMetadata = true
             };
         }
@@ -370,9 +409,67 @@ namespace PrefabToPsd
                 // Transparent RGB is undefined.
                 if (alpha == 0 && channel < 3) continue;
                 Assert(Math.Abs(image.Pixels[offset + channel] - expected[channel]) <= tolerance,
-                    message + " channel " + channel + ": expected " + expected[channel] +
-                    " ± " + tolerance + ", got " + image.Pixels[offset + channel] + ".");
+                    message + " at (" + x + "," + y + ") channel " + channel + ": expected " + expected[channel] +
+                    " ± " + tolerance + ", got " + image.Pixels[offset + channel] +
+                    "; full actual RGBA=" + PixelText(image.Pixels, offset) + ".");
             }
+        }
+
+        private static string PixelText(byte[] pixels, int offset)
+        {
+            return "(" + pixels[offset] + "," + pixels[offset + 1] + "," +
+                pixels[offset + 2] + "," + pixels[offset + 3] + ")";
+        }
+
+        private static string AlphaSummary(byte[] pixels, int width, int height)
+        {
+            int count = 0, minX = width, minY = height, maxX = -1, maxY = -1;
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                {
+                    if (pixels[(y * width + x) * 4 + 3] == 0) continue;
+                    count++;
+                    minX = Math.Min(minX, x); minY = Math.Min(minY, y);
+                    maxX = Math.Max(maxX, x); maxY = Math.Max(maxY, y);
+                }
+            return "nontransparent=" + count + "; alphaBounds=" + (count == 0 ? "<empty>" :
+                minX + "," + minY + " " + (maxX - minX + 1) + "x" + (maxY - minY + 1));
+        }
+
+        private static void RecordCaptureArtifacts(PsdProbe image, ExportReport report)
+        {
+            List<string> details = new List<string>();
+            details.Add("PSD: " + report.PsdPath);
+            details.Add("Merged " + AlphaSummary(image.Pixels, image.Width, image.Height));
+            details.Add("Red sample (10,10) RGBA=" + PixelText(image.Pixels, (10 * image.Width + 10) * 4));
+            details.Add("Red vertical mirror (10,53) RGBA=" + PixelText(image.Pixels, (53 * image.Width + 10) * 4));
+            details.Add("Blue sample (38,25) RGBA=" + PixelText(image.Pixels, (25 * image.Width + 38) * 4));
+            details.Add("Overlap sample (24,16) RGBA=" + PixelText(image.Pixels, (16 * image.Width + 24) * 4));
+            foreach (ProbeLayer layer in image.Layers)
+                if (layer.Kind == 0)
+                    details.Add("Layer '" + layer.Name + "': bounds=" + layer.Left + "," + layer.Top + " " +
+                        layer.Width + "x" + layer.Height + "; " + AlphaSummary(layer.Pixels, layer.Width, layer.Height));
+            details.AddRange(report.CaptureDiagnostics);
+            foreach (string warning in report.Warnings) details.Add("Warning: " + warning);
+            string path = Path.ChangeExtension(report.PsdPath, ".diagnostics.txt");
+            File.WriteAllLines(path, details.ToArray(), Encoding.UTF8);
+            foreach (string detail in details) Log("DIAGNOSTIC " + detail);
+            Texture2D preview = new Texture2D(image.Width, image.Height, TextureFormat.RGBA32, false);
+            try
+            {
+                Color32[] pixels = new Color32[image.Width * image.Height];
+                for (int y = 0; y < image.Height; y++)
+                    for (int x = 0; x < image.Width; x++)
+                    {
+                        int source = (y * image.Width + x) * 4;
+                        pixels[(image.Height - 1 - y) * image.Width + x] = new Color32(
+                            image.Pixels[source], image.Pixels[source + 1], image.Pixels[source + 2], image.Pixels[source + 3]);
+                    }
+                preview.SetPixels32(pixels);
+                preview.Apply(false, false);
+                File.WriteAllBytes(Path.ChangeExtension(report.PsdPath, ".preview.png"), preview.EncodeToPNG());
+            }
+            finally { UnityEngine.Object.DestroyImmediate(preview); }
         }
 
         private static void Bounds(ProbeLayer layer, int left, int top, int width, int height, string message)

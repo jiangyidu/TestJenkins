@@ -40,3 +40,8 @@ Thumbs.db
 *.tmp
 
 # Keep checked-in PSD test samples, ICC profiles and release packages.
+# Exclude regenerated negative fixtures and compiler probes.
+Tests/Results/**/*.bin
+Tests/Results/reference/fixtures/
+Tests/Results/integrated-core/reader/*.psd
+!Tests/Results/integrated-core/reader/verified-*.psd
