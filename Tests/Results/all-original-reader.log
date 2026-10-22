@@ -1,0 +1,6 @@
+PASS original parser + layer decoder: complex_raw.psd
+PASS original parser + layer decoder: complex_rle.psd
+PASS original parser + layer decoder: empty_rle.psd
+PASS original parser + layer decoder: maximum_width_rle.psd
+PASS original parser + layer decoder: off_canvas_raw.psd
+PASS: 130 original-reader checks; 5 files. No Unity importer/rendering invoked.

@@ -1,0 +1,6 @@
+Real Unity Editor API compile; C# language version 6
+Compiler: /workspace/work/toolchain/Editor/Data/Tools/RoslynNet46/csc.exe
+Sources: 16
+References: 63
+PASS: all package C# files compiled.
+This is compilation only, not a graphics/editor integration test.

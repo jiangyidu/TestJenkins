@@ -1,0 +1,13 @@
+Input: PsdTOUgui.zip
+SHA256: bfeae8e3aacb16df9f134de81e1d2c40d6c6341882f34efcf9c9d63b399579e5
+Archive entries: 125
+Files: 106
+Types: {'.cs': 42, '.meta': 62, '.asset': 1, '.md': 1}
+
+Unity reference toolchain: 2018.4.36f1 Linux Editor
+Changeset: 6cd387d23174
+Official release: https://unity.com/releases/editor/whats-new/2018.4.36f1
+Download: https://download.unity3d.com/download_unity/6cd387d23174/LinuxEditorInstaller/Unity.tar.xz
+
+The uploaded original plugin and the Unity installation are not redistributed.
+New scripts are independent; the original plugin is an optional metadata source.

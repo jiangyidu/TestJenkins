@@ -1,0 +1,53 @@
+{
+  "target_unity": "2018.4.36f1",
+  "version": "2.0.0",
+  "jobs": [
+    {
+      "name": "compile",
+      "exit_code": 0
+    },
+    {
+      "name": "core",
+      "exit_code": 0
+    },
+    {
+      "name": "reference",
+      "exit_code": 0
+    },
+    {
+      "name": "workflow",
+      "exit_code": 0
+    },
+    {
+      "name": "original-reader",
+      "exit_code": 0
+    }
+  ],
+  "unity_gpu_executed": false,
+  "photoshop_gui_executed": false,
+  "core_assertions": 446,
+  "reference_assertions": 37,
+  "workflow_assertions": 108,
+  "managed_assertions": 591,
+  "independent_psd_files": 7,
+  "independent_icc_profiles": 2,
+  "original_reader_assertions": 130,
+  "source_sha256": {
+    "Assets/PrefabToPsd/Editor/Core/PsdDocument.cs": "9435046760488ffe08c54d1ebbbee9538e51101f9d4f2fa7cba4bdb772841a4e",
+    "Assets/PrefabToPsd/Editor/Core/PsdOutputVerifier.cs": "6ec0fa789fd74bd58176913fb0f01f565c77746b3c3f0ea627f7fb1ea4bf0fc5",
+    "Assets/PrefabToPsd/Editor/Core/PsdReferenceReader.cs": "ab18dd5137dc03f9c31332383ec4038ea85192d33ad8c860199d457a07547ea1",
+    "Assets/PrefabToPsd/Editor/Core/PsdSafeResources.cs": "ad757009fbb66179e4ad42339497f193261dc608a622e5159927d4165563d9b3",
+    "Assets/PrefabToPsd/Editor/Core/PsdWriter.cs": "ebc484e0f9e6b294b1a4d1b16f4049308934cf8827f8f1dd1f8c21955045568d",
+    "Assets/PrefabToPsd/Editor/PrefabPsdBatch.cs": "df3b98f0da59de23021065d5ee93d70c6b52fb17efaef40f5e8c9fdfdb4813df",
+    "Assets/PrefabToPsd/Editor/PrefabPsdWindow.cs": "912cc52bdae6e89c1677b4dc2e1b23d38dd6bd18bae2a6d1ebdb1e570f7c0840",
+    "Assets/PrefabToPsd/Editor/Tests/PrefabPsdDemo.cs": "89f60990da0a6f869b68d44d1ed6704dca016b9bdd4d912b61785650c5202fd2",
+    "Assets/PrefabToPsd/Editor/Tests/PrefabPsdSelfTests.cs": "d7356a2321e05214761dce0782f40e2ed512c1c08b5b3b2fe95f69a51e29818a",
+    "Assets/PrefabToPsd/Editor/Tests/PrefabPsdWorkflowSelfTests.cs": "d2eec8db790efaf263d6f44ac34c30aba671de0e1891a44cbb63e45402ae7b84",
+    "Assets/PrefabToPsd/Editor/Unity/PrefabPsdBatchService.cs": "88d30e085357dd7857ce0ca4f7c770e3f52944963ec815fbc37f47120967f04a",
+    "Assets/PrefabToPsd/Editor/Unity/PrefabPsdExporter.cs": "332297b4f8294b1344839d0b05a4d549437739d0a3cf4eca6e2515a913b399a4",
+    "Assets/PrefabToPsd/Editor/Unity/PrefabPsdMetadata.cs": "3166215c856e7e181e0e0871fdbcf69fd580f65ba429b5796b1ac2e2e7e2976b",
+    "Assets/PrefabToPsd/Editor/Unity/PrefabPsdOptions.cs": "ad861fdc4403ce629d7ab0debce6c65b0e5908ce9c02193f1acc25718de56928",
+    "Assets/PrefabToPsd/Editor/Unity/PrefabPsdReference.cs": "1936b9e6bc32c4c3ecae253ca40d6ddf1ef4b5ee44d9675efb3caa4c2cda7c5d",
+    "Assets/PrefabToPsd/Editor/Unity/PrefabPsdWorkflow.cs": "aa12b0bb8c237d724d833e69dde5f4d368c1b502f941493aae1608e12bb0d611"
+  }
+}

@@ -1,0 +1,68 @@
+Initiating legacy licensing module
+DisplayProgressbar: Unity license
+[UnityConnectServicesConfig] config is NOT valid, switching to default
+Request timed out while processing request "https://public-cdn.cloud.unity3d.com/config/production", HTTP error code 0
+.[UnityConnect] Request timed out.
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Error enumerating network interfaces: Operation not permitted
+Cancelling DisplayDialog: Failed to activate/update license. Missing or bad username and password. Please try again using valid credentials or contact support@unity3d.com
+This should not be called in batch mode.
+ 
+(Filename: /home/bokken/buildslave/unity/build/Editor/Platform/Linux/EditorUtility.cpp Line: 257)
+

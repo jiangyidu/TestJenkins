@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-22",
+  "target_unity": "2018.4.36f1",
+  "language": "C# 6",
+  "baseline_assertions": 267,
+  "reader_verifier_assertions": 103,
+  "resource_assertions": 76,
+  "total_managed_assertions": 446,
+  "independent_psd_files": 7,
+  "independent_icc_profiles": 2,
+  "unity_gpu_executed": false,
+  "photoshop_gui_executed": false,
+  "full_replay_script": "Tests/IntegratedCore/run-integrated-core-tests.sh",
+  "input_sha256": {
+    "Assets/PrefabToPsd/Editor/Core/PsdDocument.cs": "9435046760488ffe08c54d1ebbbee9538e51101f9d4f2fa7cba4bdb772841a4e",
+    "Assets/PrefabToPsd/Editor/Core/PsdOutputVerifier.cs": "6ec0fa789fd74bd58176913fb0f01f565c77746b3c3f0ea627f7fb1ea4bf0fc5",
+    "Assets/PrefabToPsd/Editor/Core/PsdReferenceReader.cs": "ab18dd5137dc03f9c31332383ec4038ea85192d33ad8c860199d457a07547ea1",
+    "Assets/PrefabToPsd/Editor/Core/PsdSafeResources.cs": "ad757009fbb66179e4ad42339497f193261dc608a622e5159927d4165563d9b3",
+    "Assets/PrefabToPsd/Editor/Core/PsdWriter.cs": "ebc484e0f9e6b294b1a4d1b16f4049308934cf8827f8f1dd1f8c21955045568d",
+    "Tests/IntegratedCore/ReaderSelfTests.cs": "10b44dd5fb1c3d0325e75517a013b4205a7ffe135534a39a464a138a176eccf3",
+    "Tests/IntegratedCore/ResourceSelfTests.cs": "9f97728cf9be5ec1293878c4bea30b9208364a279beb89acf3146f85cce4d0f7",
+    "Tests/IntegratedCore/run-integrated-core-tests.sh": "6aac580c407d8606da9d59620b9579d60a80f9f7fb4c2ba17add9996dad3c871",
+    "Tests/IntegratedCore/run-resource-tests.sh": "d69a1b75a3cca771d0156cd84b1a0a6fe1b0a269288f5fd6a611d94a2b4b4751",
+    "Tests/IntegratedCore/srgb.icc": "36475f54fce8d65116ade0d233abf078395a98ffe3154808bee464b4183be2bb",
+    "Tests/IntegratedCore/verify_resources.py": "a391e62b8d74f083b7135a38dc47f4db04d6a7ded3f9766eba14184d4a4d4dc0"
+  }
+}

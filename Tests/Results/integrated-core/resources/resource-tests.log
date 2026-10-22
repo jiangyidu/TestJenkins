@@ -1,0 +1,74 @@
+PASS Real LittleCMS sRGB matrix/TRC profile is accepted
+PASS Profile description does not determine sRGB identity
+PASS Non-sRGB mutation retains the original sRGB description
+PASS Adobe-RGB-like colorants cannot pass under an unchanged sRGB description
+PASS Gamma 2.2 is not silently treated as the piecewise sRGB transfer
+PASS Wrong ICC magic
+PASS Wrong RGB data space
+PASS Wrong PCS
+PASS Unsupported profile version
+PASS Output/printer profile is not admitted
+PASS Declared size must equal actual bytes
+PASS Unknown rendering intent
+PASS Header illuminant must be D50
+PASS White point tag must match D50
+PASS Duplicate tag signatures are rejected
+PASS Unaligned tag offset is rejected
+PASS Tag beyond end of profile is rejected
+PASS Tag offset into the directory is rejected
+PASS Partially overlapping tag blocks are rejected
+PASS Unbounded tag count is rejected
+PASS Missing required tags are rejected
+PASS A2B lookup processing is rejected
+PASS LUT payload cannot hide under an unrelated tag
+PASS Nonzero XYZ reserved word is rejected
+PASS Unknown parametric curve function is rejected
+PASS Negative gamma is rejected
+PASS Zero parametric scale is rejected
+PASS Truncated ICC length 0
+PASS Truncated ICC length 1
+PASS Truncated ICC length 25
+PASS Truncated ICC length 127
+PASS Truncated ICC length 128
+PASS Truncated ICC length 131
+PASS Truncated ICC length 132
+PASS Truncated ICC length 263
+PASS Truncated ICC length 519
+PASS Truncated ICC length 587
+PASS Null profile is not accepted
+PASS Oversized profile is rejected before parsing
+PASS Canonical sampled sRGB TRC is supported
+PASS Two endpoints do not prove an sRGB curve
+PASS Non-monotonic sampled TRC is rejected
+PASS Canonical type-4 parametric sRGB TRC is supported
+PASS Null resource rejected
+PASS Null resource payload rejected
+PASS Arbitrary resource IDs cannot be injected
+PASS ResolutionInfo must have exact size
+PASS Zero resolution rejected
+PASS Unknown resolution unit rejected
+PASS Unknown size unit rejected
+PASS Invalid pixel aspect 0
+PASS Invalid pixel aspect -1
+PASS Invalid pixel aspect NaN
+PASS Invalid pixel aspect Infinity
+PASS Invalid pixel aspect 101
+PASS Unknown pixel-aspect version rejected
+PASS Resource fixture dimensions and layer count
+PASS Exactly the three safe resource IDs read back
+PASS Resource payload exact for ID 1005, Raw
+PASS Resource payload exact for ID 1039, Raw
+PASS Resource payload exact for ID 1064, Raw
+PASS Pixel channels unchanged by safe resources, Raw
+PASS Resource fixture dimensions and layer count
+PASS Exactly the three safe resource IDs read back
+PASS Resource payload exact for ID 1005, Rle
+PASS Resource payload exact for ID 1039, Rle
+PASS Resource payload exact for ID 1064, Rle
+PASS Pixel channels unchanged by safe resources, Rle
+PASS Unsafe ICC is rejected before writing final output
+PASS Unsafe resource validation preserves previous output
+PASS No temporary residue after resource rejection
+PASS Duplicate safe resource IDs are rejected
+PASS Duplicate resource validation preserves previous output
+PASS: 76 resource assertions. No Unity native/GPU calls.

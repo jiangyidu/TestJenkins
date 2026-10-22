@@ -1,0 +1,6 @@
+{
+  "Tests/IntegratedCore/srgb.icc": "36475f54fce8d65116ade0d233abf078395a98ffe3154808bee464b4183be2bb",
+  "Tests/IntegratedCore/ResourceSelfTests.cs": "9f97728cf9be5ec1293878c4bea30b9208364a279beb89acf3146f85cce4d0f7",
+  "Tests/IntegratedCore/verify_resources.py": "a391e62b8d74f083b7135a38dc47f4db04d6a7ded3f9766eba14184d4a4d4dc0",
+  "Tests/IntegratedCore/run-resource-tests.sh": "d69a1b75a3cca771d0156cd84b1a0a6fe1b0a269288f5fd6a611d94a2b4b4751"
+}

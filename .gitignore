@@ -1,0 +1,42 @@
+# Unity-generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+
+# Local IDE and managed compiler output
+.vs/
+.idea/
+**/bin/
+**/obj/
+*.csproj
+!/Tests/Standalone/CoreSelfTest.csproj
+*.sln
+*.suo
+*.user
+*.pidb
+*.pdb
+*.mdb
+*.dll
+*.exe
+*.rsp
+
+# Python and OS caches
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.DS_Store
+Thumbs.db
+
+# Local configuration
+.env
+.env.*
+!.env.example
+*.tmp
+
+# Keep checked-in PSD test samples, ICC profiles and release packages.

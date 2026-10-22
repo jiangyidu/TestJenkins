@@ -1,0 +1,5 @@
+PASS expected-srgb.icc: independently parsed by Pillow/LittleCMS (sRGB built-in)
+PASS sampled-srgb.icc: independently parsed by Pillow/LittleCMS (sRGB built-in)
+PASS resources-raw.psd: ICC bytes exact; resolution/aspect/VersionInfo correct; layer and merged bytes exact; independent composite correct
+PASS resources-rle.psd: ICC bytes exact; resolution/aspect/VersionInfo correct; layer and merged bytes exact; independent composite correct
+PASS independent resources: 2 ICC profiles and 2 PSD files. No Unity GPU calls.

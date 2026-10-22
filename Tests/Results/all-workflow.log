@@ -1,0 +1,109 @@
+PASS Business underscore suffix remains intact
+PASS Multiple business underscores remain intact
+PASS Known text/layout markers are cleaned for artists
+PASS Known slice annotation is removed from baked artist output
+PASS Adjacent bare layout tags are all removed
+PASS Adjacent value tags are removed
+PASS Unknown at-sign text is not mistaken for layout DSL
+PASS Unknown dot suffix remains intact
+PASS Empty cleaned name has a usable fallback
+PASS Baked text is an image, never a fake native text layer
+PASS Container's own rendered graphic has a background role
+PASS Plain folder receives structural group naming
+PASS Current appearance preserves the current name
+PASS Reference mode neutralizes an existing fake native-text suffix
+PASS Reference mode neutralizes underscore text semantics without deleting business text
+PASS Reference mode removes already-baked slice directives
+PASS Reference mode removes promotion/skip directives from real pixels
+PASS Reference mode keeps structural folders from being skipped on import
+PASS Reference mode keeps an ordinary safe name exactly
+PASS Reference mode keeps a safe image name exactly
+PASS Windows reserved device name is escaped
+PASS Reserved stem with an extension is escaped
+PASS Reserved numbered device is escaped
+PASS Nonreserved numbered name is preserved
+PASS Trailing spaces and periods are removed
+PASS Invalid characters are sanitized for all target platforms
+PASS Chinese and a valid surrogate pair are preserved
+PASS Malformed Unicode pairs cannot break filenames
+PASS Empty file name has a fallback
+PASS Unicode normalization is deterministic
+PASS Length limiting never splits a surrogate pair
+PASS Every source receives exactly one output filename
+PASS Batch filenames remain unique ignoring case: Main_11111111aaaaaaaaaaaaaaaaaaaaaaaa.psd
+PASS Plan contains filenames only: Main_11111111aaaaaaaaaaaaaaaaaaaaaaaa.psd
+PASS Batch filenames remain unique ignoring case: main_11111111bbbbbbbbbbbbbbbbbbbbbbbb.psd
+PASS Plan contains filenames only: main_11111111bbbbbbbbbbbbbbbbbbbbbbbb.psd
+PASS Batch filenames remain unique ignoring case: Main_11111111_33333333cccccccccccccccccccccccc.psd
+PASS Plan contains filenames only: Main_11111111_33333333cccccccccccccccccccccccc.psd
+PASS Batch filenames remain unique ignoring case: .._outside_44444444dddddddddddddddddddddddd.psd
+PASS Plan contains filenames only: .._outside_44444444dddddddddddddddddddddddd.psd
+PASS Batch filenames remain unique ignoring case: é_55555555eeeeeeeeeeeeeeeeeeeeeeee.psd
+PASS Plan contains filenames only: é_55555555eeeeeeeeeeeeeeeeeeeeeeee.psd
+PASS Batch filenames remain unique ignoring case: é_66666666ffffffffffffffffffffffff.psd
+PASS Plan contains filenames only: é_66666666ffffffffffffffffffffffff.psd
+PASS Same-name assets include a stable GUID prefix
+PASS A source uses the same filename alone or alongside other selections
+PASS A source uses the same filename alone or alongside other selections
+PASS A source uses the same filename alone or alongside other selections
+PASS A source uses the same filename alone or alongside other selections
+PASS A source uses the same filename alone or alongside other selections
+PASS A source uses the same filename alone or alongside other selections
+PASS Source selection order does not alter stable output paths
+PASS Source selection order does not alter stable output paths
+PASS Source selection order does not alter stable output paths
+PASS Source selection order does not alter stable output paths
+PASS Source selection order does not alter stable output paths
+PASS Source selection order does not alter stable output paths
+PASS Repeated planning is deterministic
+PASS Repeated planning is deterministic
+PASS Repeated planning is deterministic
+PASS Repeated planning is deterministic
+PASS Repeated planning is deterministic
+PASS Repeated planning is deterministic
+PASS Even duplicate input identities cannot overwrite one another in the pure plan
+PASS An empty pure plan is empty
+PASS Null identity collection is rejected
+PASS Null identity entry is rejected
+PASS Per-item options are a separate snapshot object
+PASS Clone retains selected preset and exact reference path
+PASS Clone retains canvas and memory settings
+PASS Clone retains compression, structure and verification settings
+PASS Clone does not reset explicit reference toggles
+PASS Clone retains cancellation/progress callback
+PASS Per-item changes do not mutate the shared window options
+PASS Preset selects explicit safe defaults: CurrentAppearance
+PASS Preset preserves user resolution/budget/compression: CurrentAppearance
+PASS Canvas marker is enabled only for structure preset
+PASS Normal presets do not accidentally inherit an active reference path
+PASS Preset selects explicit safe defaults: ArtistDelivery
+PASS Preset preserves user resolution/budget/compression: ArtistDelivery
+PASS Canvas marker is enabled only for structure preset
+PASS Normal presets do not accidentally inherit an active reference path
+PASS Preset selects explicit safe defaults: RoundTripStructure
+PASS Preset preserves user resolution/budget/compression: RoundTripStructure
+PASS Canvas marker is enabled only for structure preset
+PASS Normal presets do not accidentally inherit an active reference path
+PASS Preset selects explicit safe defaults: SourceReference
+PASS Preset preserves user resolution/budget/compression: SourceReference
+PASS Canvas marker is enabled only for structure preset
+PASS Normal presets do not accidentally inherit an active reference path
+PASS Null preset target is rejected
+PASS Unknown preset is rejected
+PASS Existing single-export CLI is retained
+PASS Default CLI is current appearance with verification
+PASS Windows separators normalize in CLI input assets
+PASS CLI keeps explicit reference and source preset together
+PASS CLI keeps explicit resolution and budget after selecting a preset
+PASS Explicit CLI switches override preset defaults
+PASS CLI list-file batch accepts multiple trimmed assets
+PASS Multiple input CLI cannot overwrite one output file
+PASS CLI requires width and height together
+PASS Asset path traversal is rejected
+PASS Relative output path is rejected
+PASS Undefined numeric preset is rejected
+PASS Memory budget outside limits is rejected
+PASS Duplicate value argument is rejected instead of silently selecting a different source
+PASS Conflicting file/directory output flags are rejected
+PASS Missing argument value is rejected
+PASS: 108 workflow pure assertions. Unity native objects/rendering were not invoked.

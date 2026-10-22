@@ -1,0 +1,27 @@
+融合版只读代码审查（2026-10-22）
+
+审查范围：Export -> naming -> reference identity/pixels/resources -> temporary verification -> atomic commit；Options Clone；窗口/CLI/BatchService 配置；纯读Preflight；Reader/ICC资源与元数据ID一致性。未修改生产实现，建议由负责模块的agent处理。
+
+结论：当前静态审查未发现尚未处理的发布阻断。现有真实程序集编译记录为C#6/16源文件通过（最终新增测试数量以root最终编译记录为准）。这不等于GPU/Photoshop实机验证。
+
+已核查主链：
+1. 单次Exporter先Clone当前Options，BatchService再对统一snapshot逐项Clone；不重新构造默认preset/reference配置。
+2. 预检只读节点/现有几何，不ForceRebuild源对象布局、不访问Graphic.material；估计与真正副本布局差异已有UI提示。
+3. Reference只关联带metadata的像素层；层ID重分配以对象映射同步回JSON，再按新ID同步最终名称；不改变当前层序。
+4. Reference像素需要bounds与每一RGBA字节相同，且参考层/祖先外观安全、opacity255；不采用字体无关的近似样式或MAE阈值。
+5. #Canvas放在完整分组之外、隐藏且透明；其额外像素数组计入预算。保空分组不伪造隐藏节点像素。
+6. 输出验证在writer的临时文件关闭后、最终路径Move/Replace之前进行。0.98进度取消会中止验证/提交，并清理临时文件、保留旧目标。
+7. JSON失败保留已成功PSD并报告warning；批量取消不删除或重新标为失败的已成功item。
+
+审查发现并已落实：
+- Reference原样复制非1.0 PixelAspect会改变方形Unity画布显示比例：现仅继承经过验证的square aspect，其他warn/skip；37条reference-policy日志包含正负用例。
+- SourceReference当前名已带.txt/@slice/#/$时，仅拒绝“恢复危险原名”不足以安全：Naming现会中和已知危险语义为.img/.group/.bg，普通安全名保持；CurrentAppearance按既有约定保名。
+- 旧LayoutTag lookahead未接受相邻@标签，可能留下@top：现补@并有相邻bare/value tags回归。Workflow pure日志102条通过。
+- Reference luni若外部writer将尾NUL终止符计入长度，应兼容：现TrimEnd尾NUL、仍拒绝中间NUL，Reader日志103条通过。Writer预期名字继续严格不接受NUL。
+
+需在文档清晰说明的边界（非阻断）：
+- LayerCount统计内容Graphic，隐藏#Canvas标记不计入该数字。
+- PreserveEmptyGroups保留有可导出内容的Prefab中的空组；完全没有活动Graphic的根仍会拒绝导出。
+- 窗口/CLI选定多个Prefab时，显式reference path按同一配置应用；不同原稿应使用每Prefab自动来源或分别执行，不能默认猜测。
+- 根变换归一化、隐藏节点像素不导出、复杂Canvas排序/TMP/任意目标依赖混合继续沿用A的明确限制。
+- 全流程速度、Unity GPU画面和Photoshop桌面打开尚须有授权和图形设备的目标环境执行；此审查没有伪造实机通过证明。

@@ -1,0 +1,6 @@
+PASS complex_raw.psd: 8 records; layer RGBA/matte bytes exact; independent composite within tolerance
+PASS complex_rle.psd: 8 records; layer RGBA/matte bytes exact; independent composite within tolerance
+PASS empty_rle.psd: 1 records; layer RGBA/matte bytes exact; independent composite within tolerance
+PASS maximum_width_rle.psd: 1 records; layer RGBA/matte bytes exact; independent composite within tolerance
+PASS off_canvas_raw.psd: 1 records; layer RGBA/matte bytes exact; independent composite within tolerance
+PASS independent PSD interoperability: 5 files

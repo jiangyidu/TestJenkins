@@ -1,0 +1,38 @@
+PASS Exact pixels are reusable.
+PASS Reference ID and sidecar stay aligned.
+PASS Reference provenance is recorded in the sidecar.
+PASS Sidecar identifies both schema and exporter version.
+PASS One changed byte prevents pixel reuse.
+PASS A real current pixel edit is not restored to the original.
+PASS Moving a layer preserves current bounds and forbids reuse.
+PASS Disabling reuse is honored while identity matching remains available.
+PASS A user rename remains authoritative even when pixels are identical.
+PASS An unchanged source name can be restored after preset naming.
+PASS Rasterized text never regains unsafe text/slice importer semantics.
+PASS Unsafe original names are retained in JSON with a warning.
+PASS Raster-name safety preserves ordinary business names.
+PASS Current panel order is never restored to reference order.
+PASS Both unique source identities are restored.
+PASS Every final PSD record has a unique ID.
+PASS Every final PSD record has a unique ID.
+PASS Every final PSD record has a unique ID.
+PASS Restored pixel identity takes precedence over a colliding synthetic folder ID.
+PASS Final PSD and JSON ID remain aligned after a real write/read.
+PASS Ambiguous same-name/same-bounds candidates are never guessed.
+PASS Cloned source IDs do not cause reference identity or pixels to be assigned twice.
+PASS A cloned edited layer keeps its own pixels and unique identity.
+PASS An explicit reference is resolved without scanning the project.
+PASS Ordinary appearance export never auto-enables reference assistance.
+PASS Missing required reference fails before an output is written.
+PASS A missing explicit reference is not silently replaced with another file.
+PASS The read-only reference cannot also be the output destination.
+PASS Reference bytes survive a rejected same-path export.
+PASS Fixture is a canonical sRGB profile.
+PASS Verified sRGB is copied with matching report and JSON provenance.
+PASS ICC resource bytes are copied exactly.
+PASS A changed RGB colorant is rejected even with an sRGB description.
+PASS The reference fixture contains its declared profile payload.
+PASS Foreign RGB profiles cannot reinterpret current Unity pixels.
+PASS A non-square original pixel aspect cannot distort the current square-pixel Unity canvas.
+PASS A verified square-pixel aspect can be inherited safely.
+PASS: 37 reference-policy assertions; no Unity GPU invoked.
